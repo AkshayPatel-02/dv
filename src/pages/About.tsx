@@ -33,6 +33,11 @@ const About = () => {
       year: 'JUL , 2025',
       title: 'DATA.LINK',
       description: 'DATA.LINK – A hands-on workshop on app-database connectivity. Learn how data flows between applications and databases in real-world systems.'
+    },
+    {
+      year: 'OCT , 2025',
+      title: 'ContribX',
+      description: 'ContribX is a hands-on workshop that empowers students to contribute to open-source projects,fostering collaboration and real-world coding experience in the open-source ecosystem.'
     }
   ];
 
