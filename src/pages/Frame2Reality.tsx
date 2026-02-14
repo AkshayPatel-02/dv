@@ -140,9 +140,13 @@ export default function Frame2Reality() {
   const [bootSequence, setBootSequence] = useState(true);
   const [showPortalAnimation, setShowPortalAnimation] = useState(location.state?.showAnimation === true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  // Form State
   const [formStep, setFormStep] = useState(1);
   const [teamSize, setTeamSize] = useState(4);
   const [errors, setErrors] = useState<string | null>(null);
+  
+  // Controlled Inputs
   const [formData, setFormData] = useState({
     TeamName:'', LeaderName:'', LeaderRoll:'', LeaderYear:'',
     LeaderBranch:'', LeaderSection:'', LeaderPhone:'', LeaderEmail:''
@@ -256,26 +260,87 @@ export default function Frame2Reality() {
     }
   }, [mcDoneCount, titlePhase]);
 
+  // ─────────────────────────────────────────────────────────────────
+  // FORM VALIDATION LOGIC
+  // ─────────────────────────────────────────────────────────────────
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors(null);
   };
+
   const validateStep1 = () => {
-    const { TeamName,LeaderName,LeaderRoll,LeaderYear,LeaderBranch,LeaderSection,LeaderPhone,LeaderEmail } = formData;
-    return !!(TeamName&&LeaderName&&LeaderRoll&&LeaderYear&&LeaderBranch&&LeaderSection&&LeaderPhone&&LeaderEmail);
+    const { TeamName, LeaderName, LeaderRoll, LeaderYear, LeaderBranch, LeaderSection, LeaderPhone, LeaderEmail } = formData;
+    
+    // Check for empty fields
+    if (!TeamName || !LeaderName || !LeaderRoll || !LeaderYear || !LeaderBranch || !LeaderSection || !LeaderPhone || !LeaderEmail) {
+        setErrors("ERROR: ALL FIELDS ARE MANDATORY");
+        return false;
+    }
+
+    // Phone Validation (10 digits)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(LeaderPhone)) {
+        setErrors("ERROR: INVALID PHONE NUMBER");
+        return false;
+    }
+
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(LeaderEmail)) {
+        setErrors("ERROR: INVALID EMAIL ADDRESS");
+        return false;
+    }
+
+    return true;
   };
-  const nextStep = () => validateStep1() ? setFormStep(2) : setErrors('MISSION CRITICAL: ALL FIELDS REQUIRED TO PROCEED');
+
+  const validateStep2 = (formDataObj: FormData) => {
+     // Loop through members based on team size
+     for (let i = 2; i <= teamSize; i++) {
+        const name = formDataObj.get(`Member${i}_Name`);
+        const roll = formDataObj.get(`Member${i}_Roll`);
+        if (!name || !roll) {
+           setErrors(`ERROR: OPERATIVE 0${i} DETAILS MISSING`);
+           return false;
+        }
+     }
+     return true;
+  };
+
+  const nextStep = () => {
+    if (validateStep1()) {
+        setFormStep(2);
+        setErrors(null);
+    } 
+    // Error is set inside validateStep1
+  };
 
   const GOOGLE_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE';
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); setLoading(true);
-    const data = new FormData(e.currentTarget);
+    e.preventDefault(); 
+    setLoading(true);
+    setErrors(null);
+
+    const form = e.currentTarget;
+    const data = new FormData(form);
+
+    // Validate Step 2 before submitting
+    if (!validateStep2(data)) {
+        setLoading(false);
+        return;
+    }
+
     try {
       await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:data });
       setShowSuccessModal(true);
       setTimeout(() => navigate('/events'), 4000);
-    } catch (err) { console.error(err); alert('Connection Failed. Try again.'); }
-    finally { setLoading(false); }
+    } catch (err) { 
+        console.error(err); 
+        setErrors("CONNECTION FAILURE: UNABLE TO REACH SERVER");
+    } finally { 
+        setLoading(false); 
+    }
   };
 
   // ─────────────────────────────────────────────────────
