@@ -140,6 +140,7 @@ export default function Frame2Reality() {
   const [bootSequence, setBootSequence] = useState(true);
   const [showPortalAnimation, setShowPortalAnimation] = useState(location.state?.showAnimation === true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
   
   // Form State
   const [formStep, setFormStep] = useState(1);
@@ -184,6 +185,12 @@ export default function Frame2Reality() {
     calc();
     window.addEventListener('resize', calc);
     return () => window.removeEventListener('resize', calc);
+  }, []);
+
+  // ── CHECK REGISTRATION STATUS ──
+  useEffect(() => {
+    const status = localStorage.getItem('dv_registration_open');
+    if (status === 'false') setRegistrationClosed(true);
   }, []);
 
   // ── BOOT + CURSOR ──
@@ -753,6 +760,28 @@ export default function Frame2Reality() {
               </div>
               <div className="p-6 md:p-12 relative bg-black/80 backdrop-blur">
                 <div className="relative z-10">
+
+                  {/* REGISTRATION CLOSED MESSAGE */}
+                  {registrationClosed ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-red-500/10 border-2 border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertTriangle className="text-red-500 w-10 h-10" />
+                      </div>
+                      <h2 className="text-2xl md:text-4xl font-black text-red-500 italic mb-4" style={{ fontFamily: 'Impact, sans-serif' }}>
+                        REGISTRATIONS CLOSED
+                      </h2>
+                      <p className="text-gray-400 font-mono text-sm mb-2">
+                        The registration limit has been reached.
+                      </p>
+                      <p className="text-gray-500 font-mono text-xs">
+                        Thank you for your interest! Stay tuned for future events.
+                      </p>
+                      <div className="mt-8 inline-block bg-red-900/20 border border-red-500/20 px-6 py-3 rounded-lg">
+                        <span className="text-red-400 font-mono text-sm font-bold animate-pulse">STATUS: SLOTS_FULL</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                   <h2 className="text-xl md:text-3xl font-mono text-green-500 mb-6 md:mb-8 animate-pulse border-b border-green-500/30 pb-4">
                     &gt; INITIATE_REGISTRATION_PROTOCOL_
                   </h2>
@@ -899,6 +928,8 @@ export default function Frame2Reality() {
                       )}
                     </AnimatePresence>
                   </form>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

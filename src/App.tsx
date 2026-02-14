@@ -16,6 +16,7 @@ import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Frame2Reality from './pages/Frame2Reality';
+import Admin from './pages/Admin';
 
 const queryClient = new QueryClient();
 
@@ -26,22 +27,32 @@ const App = () => (
       <Sonner />
       <Loader />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/excom-2022" element={<ExCom2022 />} />
-            <Route path="/excom-2023" element={<ExCom2023 />} />
-            <Route path="/excom-2024" element={<ExCom2024 />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/frame2reality" element={<Frame2Reality />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          {/* Admin route — no Layout (no Navbar/Footer) */}
+          <Route path="/admin" element={<Admin />} />
+
+          {/* All public routes wrapped in Layout */}
+          <Route
+            path="/*"
+            element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/excom-2022" element={<ExCom2022 />} />
+                  <Route path="/excom-2023" element={<ExCom2023 />} />
+                  <Route path="/excom-2024" element={<ExCom2024 />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/gallery" element={<Gallery />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/frame2reality" element={<Frame2Reality />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
