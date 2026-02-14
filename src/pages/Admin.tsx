@@ -44,7 +44,7 @@ interface TeamRegistration {
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmcXil9oJTAUMfaLXfQ-93m9WKJSRP6mzEQqrPVEsB9sTcGsU-oe7MIqe4iL2k1UY-/exec';
 
 // Simple admin password — change this to your desired password
-const ADMIN_PASSWORD = 'datavedhi@admin';
+const ADMIN_PASSWORD = 'core@admindv';
 
 // Registration participant limit
 const REGISTRATION_LIMIT = 250;
