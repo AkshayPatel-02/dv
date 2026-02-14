@@ -588,18 +588,14 @@ function authorizeEmailPermissions() {
   Logger.log('🔐 Testing email permissions...');
   
   try {
-    // This will trigger OAuth consent if not already granted
-    const testEmail = Session.getActiveUser().getEmail();
-    Logger.log('✅ Active user email: ' + testEmail);
-    
-    // Test MailApp access (this triggers the authorization prompt)
+    // Test MailApp access directly (this triggers the authorization prompt)
     const remaining = MailApp.getRemainingDailyQuota();
     Logger.log('✅ MailApp access granted. Daily quota remaining: ' + remaining);
     
     Logger.log('✅ Authorization successful! You can now send emails.');
     Logger.log('💡 Try typing "OK" in the PaymentStatus column to test email sending.');
     
-    return 'SUCCESS: Email permissions authorized';
+    return 'SUCCESS: Email permissions authorized. Daily quota: ' + remaining;
   } catch (err) {
     Logger.log('❌ Authorization failed: ' + err.message);
     throw new Error('Please authorize the required permissions when prompted.');
