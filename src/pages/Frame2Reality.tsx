@@ -353,128 +353,126 @@ export default function Frame2Reality() {
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUSMdOwrhrERGYDJylcShIh1SyeRmHXHCipTnBebYG3efA-FfdVZ8-mP0QkB1_MfEt/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); 
-    
-    if (!validateStep3()) return;
+  e.preventDefault(); 
+  
+  if (!validateStep3()) return;
 
-    setLoading(true);
-    setErrors(null);
+  setLoading(true);
+  setErrors(null);
 
-    // Build JSON payload
-    const payload: Record<string, string> = {
-      TeamName: formData.TeamName,
-      TeamSize: teamSize.toString(),
-      TotalAmount: (teamSize * 150).toString(),
-      LeaderName: formData.LeaderName,
-      LeaderRoll: formData.LeaderRoll,
-      LeaderYear: formData.LeaderYear,
-      LeaderBranch: formData.LeaderBranch,
-      LeaderSection: formData.LeaderSection,
-      LeaderPhone: formData.LeaderPhone,
-      LeaderEmail: formData.LeaderEmail,
-      UTRNumber: utrNumber,
-    };
+  const payload: Record<string, string> = {
+    TeamName: formData.TeamName,
+    TeamSize: teamSize.toString(),
+    TotalAmount: (teamSize * 150).toString(),
+    LeaderName: formData.LeaderName,
+    LeaderRoll: formData.LeaderRoll,
+    LeaderYear: formData.LeaderYear,
+    LeaderBranch: formData.LeaderBranch,
+    LeaderSection: formData.LeaderSection,
+    LeaderPhone: formData.LeaderPhone,
+    LeaderEmail: formData.LeaderEmail,
+    UTRNumber: utrNumber,
+  };
 
-    membersData.forEach((member, idx) => {
-      payload[`Member${idx+2}_Name`] = member.name || '';
-      payload[`Member${idx+2}_Roll`] = member.roll || '';
-      payload[`Member${idx+2}_Year`] = member.year || '';
-      payload[`Member${idx+2}_Branch`] = member.branch || '';
-      payload[`Member${idx+2}_Section`] = member.section || '';
-      payload[`Member${idx+2}_Phone`] = member.phone || '';
-      payload[`Member${idx+2}_Email`] = member.email || '';
+  membersData.forEach((member, idx) => {
+    payload[`Member${idx+2}_Name`] = member.name || '';
+    payload[`Member${idx+2}_Roll`] = member.roll || '';
+    payload[`Member${idx+2}_Year`] = member.year || '';
+    payload[`Member${idx+2}_Branch`] = member.branch || '';
+    payload[`Member${idx+2}_Section`] = member.section || '';
+    payload[`Member${idx+2}_Phone`] = member.phone || '';
+    payload[`Member${idx+2}_Email`] = member.email || '';
+  });
+
+  const MAX_PROOF_SIZE = 5 * 1024 * 1024;
+  if (paymentProof) {
+    if (paymentProof.size > MAX_PROOF_SIZE) {
+      setLoading(false);
+      setErrors('PAYMENT PROOF TOO LARGE (max 5 MB). Please compress the image and try again.');
+      return;
+    }
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(paymentProof);
+      });
+      payload['PaymentProof'] = base64;
+      payload['PaymentProofName'] = paymentProof.name;
+      console.log('[Frame2Reality] Payment proof encoded, size:', Math.round(base64.length / 1024), 'KB');
+    } catch (fileErr) {
+      console.warn('[Frame2Reality] Could not read payment proof, submitting without it:', fileErr);
+    }
+  }
+
+  try {
+    console.log('[Frame2Reality] Submitting registration…', { teamName: payload.TeamName });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+      signal: controller.signal,
     });
 
-    // Convert payment proof to base64 if present (limit to ~5 MB to avoid request hangs)
-    const MAX_PROOF_SIZE = 5 * 1024 * 1024; // 5 MB
-    if (paymentProof) {
-      if (paymentProof.size > MAX_PROOF_SIZE) {
-        setLoading(false);
-        setErrors('PAYMENT PROOF TOO LARGE (max 5 MB). Please compress the image and try again.');
-        return;
-      }
-      try {
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error('Failed to read file'));
-          reader.readAsDataURL(paymentProof);
-        });
-        payload['PaymentProof'] = base64;
-        payload['PaymentProofName'] = paymentProof.name;
-        console.log('[Frame2Reality] Payment proof encoded, size:', Math.round(base64.length / 1024), 'KB');
-      } catch (fileErr) {
-        console.warn('[Frame2Reality] Could not read payment proof, submitting without it:', fileErr);
-        // Continue without payment proof rather than blocking submission
-      }
-    }
+    clearTimeout(timeoutId);
 
+    let result: { status?: string; message?: string } | null = null;
     try {
-      console.log('[Frame2Reality] Submitting registration…', { teamName: payload.TeamName });
-
-      // Abort if the request takes longer than 60 seconds
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60_000);
-
-      // Google Apps Script redirects (302) after processing.
-      // Using 'text/plain' keeps it a "simple request" (no preflight).
-      // NOT using 'no-cors' so we can read the actual response.
-      const res = await fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-        redirect: 'follow',
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      // Try to parse Google Apps Script's JSON response
-      let result: { status?: string; message?: string } | null = null;
-      try {
-        result = await res.json();
-      } catch {
-        // Response might not be JSON (e.g. HTML error page)
-      }
-
-      console.log('[Frame2Reality] Server response:', res.status, result);
-
-      if (result?.status === 'error') {
-        setErrors(`SERVER ERROR: ${result.message || 'Unknown error'}`);
-      } else {
-        // status 200 + success, or any 2xx
-        setShowSuccessModal(true);
-        setTimeout(() => navigate('/events'), 4000);
-      }
-    } catch (err: unknown) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          console.error('[Frame2Reality] Request timed out after 60 s');
-          setErrors('REQUEST TIMED OUT. Please check your connection and try again.');
-        } else if (err instanceof TypeError && String(err).includes('Failed to fetch')) {
-          // CORS or network error — fall back to no-cors blind submission
-          console.warn('[Frame2Reality] CORS blocked, retrying with no-cors…');
-          try {
-            await fetch(GOOGLE_SCRIPT_URL, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload),
-            });
-            console.log('[Frame2Reality] no-cors fallback completed.');
-            setShowSuccessModal(true);
-            setTimeout(() => navigate('/frame2reality'), 4000);
-          } catch (fallbackErr) {
-            console.error('[Frame2Reality] Fallback also failed:', fallbackErr);
-            setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
-          }
-        } else {
-          console.error('[Frame2Reality] Submission error:', err);
-          setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER');
-        }
-    } finally { 
-        setLoading(false); 
+      result = await res.json();
+    } catch {
+      // Response might not be JSON
     }
-  };
+
+    console.log('[Frame2Reality] Server response:', res.status, result);
+
+    if (result?.status === 'error') {
+      setErrors(`SERVER ERROR: ${result.message || 'Unknown error'}`);
+    } else {
+      // ✅ SUCCESS - Show modal, then close it and scroll to top
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 4000);
+    }
+  } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        console.error('[Frame2Reality] Request timed out after 60 s');
+        setErrors('REQUEST TIMED OUT. Please check your connection and try again.');
+      } else if (err instanceof TypeError && String(err).includes('Failed to fetch')) {
+        console.warn('[Frame2Reality] CORS blocked, retrying with no-cors…');
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+          });
+          console.log('[Frame2Reality] no-cors fallback completed.');
+          // ✅ SUCCESS - Show modal, then close it and scroll to top
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 4000);
+        } catch (fallbackErr) {
+          console.error('[Frame2Reality] Fallback also failed:', fallbackErr);
+          setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
+        }
+      } else {
+        console.error('[Frame2Reality] Submission error:', err);
+        setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER');
+      }
+  } finally { 
+      setLoading(false); 
+  }
+};
 
   const totalAmount = teamSize * 150;
 
@@ -502,7 +500,7 @@ export default function Frame2Reality() {
     <>
       {showPortalAnimation && <GamingPortalAnimation onComplete={() => setShowPortalAnimation(false)} />}
 
-      {/* TRANSMITTING LOADER — fullscreen gaming overlay while submitting */}
+      {/* TRANSMITTING LOADER */}
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -511,16 +509,13 @@ export default function Frame2Reality() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-black/95 backdrop-blur-lg px-4"
           >
-            {/* Scan-line overlay */}
             <div className="absolute inset-0 pointer-events-none"
               style={{
                 backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34,197,94,0.03) 2px, rgba(34,197,94,0.03) 4px)',
               }}
             />
 
-            {/* Glowing hexagon spinner */}
             <div className="relative w-32 h-32 mb-8">
-              {/* Outer ring */}
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -537,7 +532,6 @@ export default function Frame2Reality() {
                   />
                 </svg>
               </motion.div>
-              {/* Inner ring — counter-rotate */}
               <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -553,7 +547,6 @@ export default function Frame2Reality() {
                   />
                 </svg>
               </motion.div>
-              {/* Center core pulse */}
               <motion.div
                 animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -563,7 +556,6 @@ export default function Frame2Reality() {
               </motion.div>
             </div>
 
-            {/* Status text with typing effect */}
             <div className="font-mono text-center space-y-3 relative z-10">
               <motion.h2
                 animate={{ opacity: [1, 0.5, 1] }}
@@ -573,7 +565,6 @@ export default function Frame2Reality() {
                 TRANSMITTING DATA
               </motion.h2>
 
-              {/* Fake terminal lines */}
               <div className="text-xs text-green-500/60 space-y-1 max-w-xs mx-auto text-left">
                 <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
                   {'>'} Encrypting payload...
@@ -599,7 +590,6 @@ export default function Frame2Reality() {
                 </motion.p>
               </div>
 
-              {/* Progress bar */}
               <div className="w-48 md:w-64 mx-auto mt-4">
                 <div className="h-1 bg-gray-800 rounded overflow-hidden">
                   <motion.div
@@ -622,7 +612,6 @@ export default function Frame2Reality() {
               </div>
             </div>
 
-            {/* Corner decorations */}
             <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-green-500/40" />
             <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-green-500/40" />
             <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-green-500/40" />
@@ -646,7 +635,7 @@ export default function Frame2Reality() {
                 <h2 className="text-3xl font-black text-white italic mb-2">MISSION ACCOMPLISHED</h2>
                 <p className="text-gray-400 font-mono text-sm mb-6">Squad registration verified. Deployment orders sent to your comms channel.</p>
                 <div className="flex flex-col gap-2">
-                  <div className="text-green-500 text-xs font-mono animate-pulse">REDIRECTING TO BASE...</div>
+                  <div className="text-green-500 text-xs font-mono animate-pulse">RETURNING TO BASE...</div>
                   <div className="h-1 w-full bg-gray-800 rounded overflow-hidden">
                     <motion.div initial={{ width:'0%' }} animate={{ width:'100%' }}
                       transition={{ duration:4, ease:'linear' }} className="h-full bg-green-500" />
@@ -894,18 +883,18 @@ export default function Frame2Reality() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left border-b border-white/10 pb-12">
               <div className="bg-zinc-900/30 border border-white/10 p-6 rounded-xl hover:border-green-500/50 transition-colors">
                 <Calendar className="w-8 h-8 text-green-500 mb-3 mx-auto md:mx-0" />
-                <h3 className="font-bold text-white mb-1">DATE</h3>
-                <p className="text-gray-400 text-sm">20th - 21st February, 2026</p>
+                <h3 className="font-bold text-white mb-1">20th - 21st February, 2026</h3>
+                <p className="text-gray-400 text-sm">DATE</p>
               </div>
               <div className="bg-zinc-900/30 border border-white/10 p-6 rounded-xl hover:border-green-500/50 transition-colors">
                 <Clock className="w-8 h-8 text-green-500 mb-3 mx-auto md:mx-0" />
-                <h3 className="font-bold text-white mb-1">TIME</h3>
-                <p className="text-gray-400 text-sm">10:00 AM – 4:20 PM</p>
+                <h3 className="font-bold text-white mb-1">10:00 AM – 4:20 PM</h3>
+                <p className="text-gray-400 text-sm">TIME</p>
               </div>
               <div className="bg-zinc-900/30 border border-white/10 p-6 rounded-xl hover:border-green-500/50 transition-colors">
                 <MapPin className="w-8 h-8 text-green-500 mb-3 mx-auto md:mx-0" />
-                <h3 className="font-bold text-white mb-1">VENUE</h3>
-                <p className="text-gray-400 text-sm">Nalanda Auditorium, VBIT</p>
+                <h3 className="font-bold text-white mb-1">Nalanda Auditorium, VBIT</h3>
+                <p className="text-gray-400 text-sm">VENUE</p>
               </div>
             </div>
 
@@ -913,9 +902,9 @@ export default function Frame2Reality() {
               <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1627398242454-45a1465c2479?q=80&w=1000')] bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative p-8 md:p-10 min-h-[350px] flex flex-col justify-end">
-                  <div className="font-mono text-green-400 text-sm mb-2">&gt; MISSION_DAY_01</div>
+                  <div className="font-mono text-green-400 text-sm mb-2">&gt; DAY_01</div>
                   <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 mc-font">GRAPHICS & UNITY</h3>
-                  <p className="text-gray-300 leading-relaxed border-l-4 border-green-500 pl-4 bg-black/50 p-3 rounded">
+                  <p className="text-gray-300 leading-relaxed pl-4 bg-black/50 p-3 rounded">
                     Hands-on sessions covering graphics fundamentals, game mechanics, and Unity basics. Culminates in the development of a simple game application.
                   </p>
                 </div>
@@ -923,9 +912,9 @@ export default function Frame2Reality() {
               <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1617802690992-15d93263d3a9?q=80&w=1000')] bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative p-8 md:p-10 min-h-[350px] flex flex-col justify-end">
-                  <div className="font-mono text-cyan-400 text-sm mb-2">&gt; MISSION_DAY_02</div>
+                  <div className="font-mono text-cyan-400 text-sm mb-2">&gt; DAY_02</div>
                   <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 pubg-font">XR & METAVERSE</h3>
-                  <p className="text-gray-300 leading-relaxed border-l-4 border-cyan-500 pl-4 bg-black/50 p-3 rounded">
+                  <p className="text-gray-300 leading-relaxed pl-4 bg-black/50 p-3 rounded">
                     Introduction to XR and Metaverse concepts. Participants will create Augmented Reality (AR) applications through guided practical implementation.
                   </p>
                 </div>
@@ -938,14 +927,14 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 3 - 4 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* REGISTRATION - Same as before, unchanged */}
+        {/* REGISTRATION */}
         <section id="register" className="py-16 md:py-32 px-4 relative z-20">
           <div className="max-w-4xl mx-auto">
             <div className="bg-[#111] border border-green-500/30 rounded-lg overflow-hidden shadow-[0_0_60px_rgba(34,197,94,0.1)]">
@@ -960,7 +949,6 @@ export default function Frame2Reality() {
               <div className="p-6 md:p-12 relative bg-black/80 backdrop-blur">
                 <div className="relative z-10">
 
-                  {/* REGISTRATION CLOSED MESSAGE */}
                   {registrationClosed ? (
                     <div className="text-center py-12">
                       <div className="w-20 h-20 bg-red-500/10 border-2 border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
