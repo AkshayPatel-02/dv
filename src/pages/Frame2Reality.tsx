@@ -350,7 +350,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUSMdOwrhrERGYDJylcShIh1SyeRmHXHCipTnBebYG3efA-FfdVZ8-mP0QkB1_MfEt/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDxUul1suEYw43FfY9ydvOm_RO11oM7BfxfxXB-uPauqxKEclZNtS1tSwHwhrYI-cXoA/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); 
@@ -938,7 +938,7 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 3 - 4 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>

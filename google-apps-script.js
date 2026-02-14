@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Frame2Reality Registration System with Email Automation
+ * @OnlyCurrentDoc
+ */
+
+/**
+ * Required OAuth Scopes - DO NOT REMOVE
+ * @param {string} https://www.googleapis.com/auth/spreadsheets - Access spreadsheets
+ * @param {string} https://www.googleapis.com/auth/drive.file - Access Drive files
+ * @param {string} https://www.googleapis.com/auth/script.send_mail - Send emails
+ */
+
 // ═══════════════════════════════════════════════════════════════════
 // GOOGLE APPS SCRIPT — Frame2Reality Registration
 // ═══════════════════════════════════════════════════════════════════
@@ -566,5 +578,30 @@ function onEdit(e) {
     }
   } catch (err) {
     Logger.log('❌ onEdit error: ' + err.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// AUTHORIZATION HELPER — Run this function manually to authorize email permissions
+// ─────────────────────────────────────────────────────────────────
+function authorizeEmailPermissions() {
+  Logger.log('🔐 Testing email permissions...');
+  
+  try {
+    // This will trigger OAuth consent if not already granted
+    const testEmail = Session.getActiveUser().getEmail();
+    Logger.log('✅ Active user email: ' + testEmail);
+    
+    // Test MailApp access (this triggers the authorization prompt)
+    const remaining = MailApp.getRemainingDailyQuota();
+    Logger.log('✅ MailApp access granted. Daily quota remaining: ' + remaining);
+    
+    Logger.log('✅ Authorization successful! You can now send emails.');
+    Logger.log('💡 Try typing "OK" in the PaymentStatus column to test email sending.');
+    
+    return 'SUCCESS: Email permissions authorized';
+  } catch (err) {
+    Logger.log('❌ Authorization failed: ' + err.message);
+    throw new Error('Please authorize the required permissions when prompted.');
   }
 }
