@@ -8,6 +8,7 @@
  * @param {string} https://www.googleapis.com/auth/spreadsheets - Access spreadsheets
  * @param {string} https://www.googleapis.com/auth/drive.file - Access Drive files
  * @param {string} https://www.googleapis.com/auth/script.send_mail - Send emails
+ * @param {string} https://www.googleapis.com/auth/script.scriptapp - Manage triggers
  */
 
 // ═══════════════════════════════════════════════════════════════════
@@ -18,24 +19,42 @@
 // 1. Create a new Google Sheet
 // 2. Go to Extensions → Apps Script
 // 3. Delete the default code and paste this entire script
-// 4. Click "Deploy" → "New deployment"
-// 5. Select type: "Web app"
-// 6. Set "Execute as": Me
-// 7. Set "Who has access": Anyone
-// 8. Click "Deploy" and copy the Web App URL
-// 9. Paste that URL in:
+// 4. Add OAuth scopes: Project Settings (⚙️) → Check "Show 'appsscript.json' manifest file"
+// 5. Open appsscript.json and add scopes (see below for JSON)
+// 6. Run the function "setupEmailTrigger" to install the email trigger
+// 7. Authorize all permissions when prompted
+// 8. Click "Deploy" → "New deployment"
+// 9. Select type: "Web app"
+// 10. Set "Execute as": Me
+// 11. Set "Who has access": Anyone
+// 12. Click "Deploy" and copy the Web App URL
+// 13. Paste that URL in:
 //    - src/pages/Frame2Reality.tsx → GOOGLE_SCRIPT_URL
 //    - src/pages/Admin.tsx → GOOGLE_SCRIPT_URL
-// 10. Done! The form submissions will now go to your Google Sheet.
+// 14. Done! The form submissions will now go to your Google Sheet.
 //
 // IMPORTANT: After any code changes, you must create a NEW deployment
 // (Deploy → New deployment) for changes to take effect.
+//
+// REQUIRED appsscript.json:
+// {
+//   "timeZone": "Asia/Kolkata",
+//   "dependencies": {},
+//   "exceptionLogging": "STACKDRIVER",
+//   "runtimeVersion": "V8",
+//   "oauthScopes": [
+//     "https://www.googleapis.com/auth/spreadsheets",
+//     "https://www.googleapis.com/auth/drive.file",
+//     "https://www.googleapis.com/auth/script.send_mail",
+//     "https://www.googleapis.com/auth/script.scriptapp"
+//   ]
+// }
 //
 // MANUAL EMAIL WORKFLOW:
 // - When a registration is received, Payment Status is set to "Pending"
 // - Email Status is set to "Not Sent"
 // - Admin verifies payment and types "OK" in the Payment Status column
-// - onEdit trigger automatically sends confirmation email to team leader
+// - Installable trigger automatically sends confirmation email to team leader
 // - Email Status updates to "✅ Mail Forwarded" or "❌ Mail Failed"
 // ═══════════════════════════════════════════════════════════════════
 
@@ -511,9 +530,9 @@ function sendConfirmationEmail(details) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// ON EDIT TRIGGER — Send email when Payment Status is set to "OK"
+// INSTALLABLE TRIGGER — Send email when Payment Status is set to "OK"
 // ─────────────────────────────────────────────────────────────────
-function onEdit(e) {
+function onEditInstallable(e) {
   try {
     const sheet = e.source.getActiveSheet();
     
@@ -600,4 +619,29 @@ function authorizeEmailPermissions() {
     Logger.log('❌ Authorization failed: ' + err.message);
     throw new Error('Please authorize the required permissions when prompted.');
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SETUP TRIGGER — Run this ONCE to install the onEdit trigger with full permissions
+// ─────────────────────────────────────────────────────────────────
+function setupEmailTrigger() {
+  // Remove all existing triggers first
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(trigger => {
+    if (trigger.getHandlerFunction() === 'onEditInstallable') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+  
+  // Create new installable onEdit trigger
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  ScriptApp.newTrigger('onEditInstallable')
+    .forSpreadsheet(ss)
+    .onEdit()
+    .create();
+  
+  Logger.log('✅ Email trigger installed successfully!');
+  Logger.log('💡 Now type "OK" in the PaymentStatus column to test email sending.');
+  
+  return 'SUCCESS: Trigger installed. Try typing OK in PaymentStatus column.';
 }
