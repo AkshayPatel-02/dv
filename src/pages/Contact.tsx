@@ -27,7 +27,7 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
+    // Handle form submission here df
     toast({
       title: "Message Sent!",
       description: "Thank you for reaching out. We'll get back to you soon.",
