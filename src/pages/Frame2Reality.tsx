@@ -738,7 +738,7 @@ export default function Frame2Reality() {
         </section>
 
         {/* ══════════════════════════════════════════
-            REGISTRATION TERMINAL
+            REGISTRATION TERMINAL..
         ══════════════════════════════════════════ */}
         <section id="register" className="py-16 md:py-32 px-4 relative z-20">
           <div className="max-w-4xl mx-auto">
