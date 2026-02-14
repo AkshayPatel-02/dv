@@ -17,8 +17,7 @@ const games = [
   { name: 'Free Fire', logo: ffImg,   color: '#ff6b00' },
 ];
 
-// ── Stable values computed ONCE outside component ──────────────────
-// Particles: fewer (20), only transform+opacity — no width/height/z
+// Stable values computed ONCE outside component
 const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   id: i,
   angle: (i / 20) * 360,
@@ -29,17 +28,15 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => ({
   color: i % 5 === 0 ? '#f2a900' : i % 5 === 1 ? '#44ff44' : i % 5 === 2 ? '#ff6b00' : i % 5 === 3 ? '#8bc34a' : '#22c55e',
 }));
 
-// Rings: use scale instead of width/height — GPU only
 const RINGS = Array.from({ length: 10 }, (_, i) => ({
   id: i,
-  size: 60, // fixed size, scaled via transform
+  size: 60,
   del: i * 0.22,
   thick: i % 3 === 0 ? 3 : 1.5,
   color: i % 4 === 0 ? 'rgba(34,197,94,0.7)' : i % 4 === 1 ? 'rgba(34,197,94,0.35)' : i % 4 === 2 ? 'rgba(242,169,0,0.25)' : 'rgba(34,197,94,0.18)',
   glow: i % 3 === 0 ? '0 0 20px rgba(34,197,94,0.6)' : '0 0 8px rgba(34,197,94,0.3)',
 }));
 
-// Speed lines: 16, stable angles
 const LINES = Array.from({ length: 16 }, (_, i) => ({
   id: i,
   angle: (i / 16) * 360,
@@ -51,11 +48,11 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
   const [stage, setStage] = useState<'tunnel' | 'games' | 'complete'>('tunnel');
 
   useEffect(() => {
-    const t1 = setTimeout(() => setStage('games'),  1800);
+    const t1 = setTimeout(() => setStage('games'), 1800);
     const t2 = setTimeout(() => {
       setStage('complete');
       setTimeout(onComplete, 500);
-    }, 8300); // last game (Free Fire right): 1800 + 2770 delay + 3400 duration ≈ 8000ms
+    }, 8300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onComplete]);
 
@@ -66,10 +63,9 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
           className="fixed inset-0 z-[9999] bg-black overflow-hidden flex items-center justify-center"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.55, ease: 'easeInOut' }}
-          // force GPU layer for whole overlay
           style={{ willChange: 'opacity' }}
         >
-          {/* ── BACKGROUND ── */}
+          {/* BACKGROUND */}
           <div
             className="absolute inset-0"
             style={{
@@ -79,7 +75,7 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
             }}
           />
 
-          {/* ── SPEED LINES (transform only) ── */}
+          {/* SPEED LINES */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             {LINES.map(line => (
               <motion.div
@@ -102,12 +98,12 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
             ))}
           </div>
 
-          {/* ── TUNNEL + PORTAL ── */}
+          {/* TUNNEL + PORTAL */}
           <div
             className="absolute inset-0 flex items-center justify-center"
             style={{ perspective: 700 }}
           >
-            {/* Rings — fixed DOM size, scaled via transform = GPU only */}
+            {/* Rings */}
             {RINGS.map(ring => (
               <motion.div
                 key={`r${ring.id}`}
@@ -154,7 +150,7 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Spinning vortex — conic, GPU rotate */}
+            {/* Spinning vortex */}
             <motion.div
               className="absolute rounded-full"
               style={{
@@ -168,7 +164,7 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
               transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
             />
 
-            {/* Portal hole — static, no animation needed */}
+            {/* Portal hole */}
             <div
               className="absolute rounded-full"
               style={{
@@ -188,7 +184,7 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
               transition={{ duration: 1.3, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Orbital particles — translate via rotate+translateX, GPU only */}
+            {/* Orbital particles */}
             {PARTICLES.map(p => (
               <motion.div
                 key={`pt${p.id}`}
@@ -200,7 +196,6 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
                   backgroundColor: p.color,
                   boxShadow: `0 0 5px ${p.color}`,
                   willChange: 'transform, opacity',
-                  // orbit using CSS transform chaining
                   originX: 0.5,
                   originY: 0.5,
                 }}
@@ -220,13 +215,12 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
               />
             ))}
 
-            {/* ── GAME LOGOS ── */}
-
+            {/* GAME LOGOS - DESKTOP & TABLET: DISPERSING */}
             {/* LEFT SIDE: PUBG (delay 0) + Minecraft (delay 1.85) */}
             {stage === 'games' && [games[0], games[2]].map((game, i) => (
               <motion.div
                 key={`L${game.name}`}
-                className="absolute hidden md:flex flex-col items-center"
+                className="absolute hidden sm:flex flex-col items-center"
                 style={{ willChange: 'transform, opacity' }}
                 initial={{ x: -480, y: i === 0 ? -110 : 90, scale: 0.15, opacity: 0 }}
                 animate={{
@@ -263,7 +257,6 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
                     {game.name}
                   </p>
                 </div>
-                {/* glow halo behind card */}
                 <motion.div
                   className="absolute inset-0 rounded-2xl -z-10"
                   style={{ background: `radial-gradient(circle, ${game.color}55, transparent 70%)`, filter: 'blur(18px)' }}
@@ -277,7 +270,7 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
             {stage === 'games' && [games[1], games[3]].map((game, i) => (
               <motion.div
                 key={`R${game.name}`}
-                className="absolute hidden md:flex flex-col items-center"
+                className="absolute hidden sm:flex flex-col items-center"
                 style={{ willChange: 'transform, opacity' }}
                 initial={{ x: 480, y: i === 0 ? 100 : -95, scale: 0.15, opacity: 0 }}
                 animate={{
@@ -323,50 +316,63 @@ const GamingPortalAnimation: React.FC<GamingPortalAnimationProps> = ({ onComplet
               </motion.div>
             ))}
 
-            {/* MOBILE: one game at a time, centered zoom-through */}
-            {stage === 'games' && games.map((game, i) => (
-              <motion.div
-                key={`M${game.name}`}
-                className="absolute md:hidden flex flex-col items-center"
-                style={{ willChange: 'transform, opacity' }}
-                initial={{ scale: 0.05, opacity: 0 }}
-                animate={{
-                  scale:   [0.05, 1.08, 1.02, 0.05],
-                  opacity: [0,    1,    1,    0],
-                }}
-                transition={{ duration: 2.8, delay: i * 1.2, ease: [0.25,0.46,0.45,0.94], times: [0, 0.24, 0.72, 1] }}
-              >
-                <div
-                  className="p-5 rounded-2xl border-2"
-                  style={{
-                    borderColor: game.color,
-                    background: 'rgba(0,0,0,0.75)',
-                    boxShadow: `0 0 35px ${game.color}88`,
+            {/* MOBILE: DISPERSING EFFECT (4 corners) */}
+            {stage === 'games' && games.map((game, i) => {
+              // Define positions for 4 corners
+              const positions = [
+                { x: [-300, -120, -120, -400], y: [-200, -80, -80, -300] },  // Top-left
+                { x: [300, 120, 120, 400], y: [-200, -80, -80, -300] },      // Top-right
+                { x: [-300, -120, -120, -400], y: [200, 80, 80, 300] },      // Bottom-left
+                { x: [300, 120, 120, 400], y: [200, 80, 80, 300] },          // Bottom-right
+              ];
+              const pos = positions[i];
+              
+              return (
+                <motion.div
+                  key={`M${game.name}`}
+                  className="absolute sm:hidden flex flex-col items-center"
+                  style={{ willChange: 'transform, opacity' }}
+                  initial={{ x: pos.x[0], y: pos.y[0], scale: 0.15, opacity: 0 }}
+                  animate={{
+                    x: pos.x,
+                    y: pos.y,
+                    scale: [0.15, 0.9, 0.85, 0.15],
+                    opacity: [0, 1, 1, 0],
                   }}
+                  transition={{ duration: 3.2, delay: i * 0.6, ease: [0.25, 0.46, 0.45, 0.94], times: [0, 0.27, 0.70, 1] }}
                 >
-                  <img
-                    src={game.logo}
-                    alt={game.name}
+                  <div
+                    className="p-4 rounded-2xl border-2"
                     style={{
-                      width: 'clamp(90px,28vw,130px)',
-                      height: 'clamp(90px,28vw,130px)',
-                      objectFit: 'contain',
-                      display: 'block',
-                      filter: `brightness(1.2) drop-shadow(0 0 10px ${game.color})`,
+                      borderColor: game.color,
+                      background: 'rgba(0,0,0,0.75)',
+                      boxShadow: `0 0 35px ${game.color}88`,
                     }}
-                  />
-                  <p
-                    className="text-center font-black mt-2 tracking-widest"
-                    style={{ fontFamily: 'Impact,sans-serif', color: game.color, fontSize: 'clamp(11px,4vw,16px)', textShadow: `0 0 8px ${game.color}` }}
                   >
-                    {game.name}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                    <img
+                      src={game.logo}
+                      alt={game.name}
+                      style={{
+                        width: 'clamp(70px,20vw,100px)',
+                        height: 'clamp(70px,20vw,100px)',
+                        objectFit: 'contain',
+                        display: 'block',
+                        filter: `brightness(1.2) drop-shadow(0 0 10px ${game.color})`,
+                      }}
+                    />
+                    <p
+                      className="text-center font-black mt-2 tracking-widest"
+                      style={{ fontFamily: 'Impact,sans-serif', color: game.color, fontSize: 'clamp(9px,3vw,12px)', textShadow: `0 0 8px ${game.color}` }}
+                    >
+                      {game.name}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
-          {/* ── BOTTOM HUD ── */}
+          {/* BOTTOM HUD */}
           <motion.div
             className="absolute bottom-4 md:bottom-8 left-0 right-0 text-center px-6"
             initial={{ opacity: 0 }}
