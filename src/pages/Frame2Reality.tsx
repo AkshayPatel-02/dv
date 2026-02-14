@@ -157,10 +157,9 @@ export default function Frame2Reality() {
   const heroScale   = useTransform(scrollYProgress, [0,0.5],[1,1.2]);
   const heroOpacity = useTransform(scrollYProgress, [0,0.5],[1,0]);
 
-  // ── FETCH QR CODE FROM ADMIN ──
+  // ── PAYMENT QR CODE (served from public/ folder) ──
   useEffect(() => {
-    // Replace with actual API call
-    setQrCodeUrl('https://via.placeholder.com/300x300.png?text=Payment+QR');
+    setQrCodeUrl('/payment-qr.jpg');
   }, []);
 
   // ── RESPONSIVE BLOCK SIZE ──
@@ -350,7 +349,8 @@ export default function Frame2Reality() {
     }
   };
 
-  const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+  // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmcXil9oJTAUMfaLXfQ-93m9WKJSRP6mzEQqrPVEsB9sTcGsU-oe7MIqe4iL2k1UY-/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); 
@@ -360,42 +360,117 @@ export default function Frame2Reality() {
     setLoading(true);
     setErrors(null);
 
-    const formDataToSend = new FormData();
-    
-    formDataToSend.append('TeamName', formData.TeamName);
-    formDataToSend.append('TeamSize', teamSize.toString());
-    formDataToSend.append('TotalAmount', (teamSize * 150).toString());
-    
-    formDataToSend.append('LeaderName', formData.LeaderName);
-    formDataToSend.append('LeaderRoll', formData.LeaderRoll);
-    formDataToSend.append('LeaderYear', formData.LeaderYear);
-    formDataToSend.append('LeaderBranch', formData.LeaderBranch);
-    formDataToSend.append('LeaderSection', formData.LeaderSection);
-    formDataToSend.append('LeaderPhone', formData.LeaderPhone);
-    formDataToSend.append('LeaderEmail', formData.LeaderEmail);
-    
+    // Build JSON payload
+    const payload: Record<string, string> = {
+      TeamName: formData.TeamName,
+      TeamSize: teamSize.toString(),
+      TotalAmount: (teamSize * 150).toString(),
+      LeaderName: formData.LeaderName,
+      LeaderRoll: formData.LeaderRoll,
+      LeaderYear: formData.LeaderYear,
+      LeaderBranch: formData.LeaderBranch,
+      LeaderSection: formData.LeaderSection,
+      LeaderPhone: formData.LeaderPhone,
+      LeaderEmail: formData.LeaderEmail,
+      UTRNumber: utrNumber,
+    };
+
     membersData.forEach((member, idx) => {
-      formDataToSend.append(`Member${idx+2}_Name`, member.name || '');
-      formDataToSend.append(`Member${idx+2}_Roll`, member.roll || '');
-      formDataToSend.append(`Member${idx+2}_Year`, member.year || '');
-      formDataToSend.append(`Member${idx+2}_Branch`, member.branch || '');
-      formDataToSend.append(`Member${idx+2}_Section`, member.section || '');
-      formDataToSend.append(`Member${idx+2}_Phone`, member.phone || '');
-      formDataToSend.append(`Member${idx+2}_Email`, member.email || '');
+      payload[`Member${idx+2}_Name`] = member.name || '';
+      payload[`Member${idx+2}_Roll`] = member.roll || '';
+      payload[`Member${idx+2}_Year`] = member.year || '';
+      payload[`Member${idx+2}_Branch`] = member.branch || '';
+      payload[`Member${idx+2}_Section`] = member.section || '';
+      payload[`Member${idx+2}_Phone`] = member.phone || '';
+      payload[`Member${idx+2}_Email`] = member.email || '';
     });
-    
-    formDataToSend.append('UTRNumber', utrNumber);
+
+    // Convert payment proof to base64 if present (limit to ~5 MB to avoid request hangs)
+    const MAX_PROOF_SIZE = 5 * 1024 * 1024; // 5 MB
     if (paymentProof) {
-      formDataToSend.append('PaymentProof', paymentProof);
+      if (paymentProof.size > MAX_PROOF_SIZE) {
+        setLoading(false);
+        setErrors('PAYMENT PROOF TOO LARGE (max 5 MB). Please compress the image and try again.');
+        return;
+      }
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(paymentProof);
+        });
+        payload['PaymentProof'] = base64;
+        payload['PaymentProofName'] = paymentProof.name;
+        console.log('[Frame2Reality] Payment proof encoded, size:', Math.round(base64.length / 1024), 'KB');
+      } catch (fileErr) {
+        console.warn('[Frame2Reality] Could not read payment proof, submitting without it:', fileErr);
+        // Continue without payment proof rather than blocking submission
+      }
     }
 
     try {
-      await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body: formDataToSend });
-      setShowSuccessModal(true);
-      setTimeout(() => navigate('/events'), 4000);
-    } catch (err) { 
-        console.error(err); 
-        setErrors("CONNECTION FAILURE: UNABLE TO REACH SERVER");
+      console.log('[Frame2Reality] Submitting registration…', { teamName: payload.TeamName });
+
+      // Abort if the request takes longer than 60 seconds
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+      // Google Apps Script redirects (302) after processing.
+      // Using 'text/plain' keeps it a "simple request" (no preflight).
+      // NOT using 'no-cors' so we can read the actual response.
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Try to parse Google Apps Script's JSON response
+      let result: { status?: string; message?: string } | null = null;
+      try {
+        result = await res.json();
+      } catch {
+        // Response might not be JSON (e.g. HTML error page)
+      }
+
+      console.log('[Frame2Reality] Server response:', res.status, result);
+
+      if (result?.status === 'error') {
+        setErrors(`SERVER ERROR: ${result.message || 'Unknown error'}`);
+      } else {
+        // status 200 + success, or any 2xx
+        setShowSuccessModal(true);
+        setTimeout(() => navigate('/events'), 4000);
+      }
+    } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          console.error('[Frame2Reality] Request timed out after 60 s');
+          setErrors('REQUEST TIMED OUT. Please check your connection and try again.');
+        } else if (err instanceof TypeError && String(err).includes('Failed to fetch')) {
+          // CORS or network error — fall back to no-cors blind submission
+          console.warn('[Frame2Reality] CORS blocked, retrying with no-cors…');
+          try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload),
+            });
+            console.log('[Frame2Reality] no-cors fallback completed.');
+            setShowSuccessModal(true);
+            setTimeout(() => navigate('/frame2reality'), 4000);
+          } catch (fallbackErr) {
+            console.error('[Frame2Reality] Fallback also failed:', fallbackErr);
+            setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
+          }
+        } else {
+          console.error('[Frame2Reality] Submission error:', err);
+          setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER');
+        }
     } finally { 
         setLoading(false); 
     }
@@ -427,6 +502,135 @@ export default function Frame2Reality() {
     <>
       {showPortalAnimation && <GamingPortalAnimation onComplete={() => setShowPortalAnimation(false)} />}
 
+      {/* TRANSMITTING LOADER — fullscreen gaming overlay while submitting */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-black/95 backdrop-blur-lg px-4"
+          >
+            {/* Scan-line overlay */}
+            <div className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34,197,94,0.03) 2px, rgba(34,197,94,0.03) 4px)',
+              }}
+            />
+
+            {/* Glowing hexagon spinner */}
+            <div className="relative w-32 h-32 mb-8">
+              {/* Outer ring */}
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-0"
+              >
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  <polygon
+                    points="50,2 93,25 93,75 50,98 7,75 7,25"
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="1.5"
+                    strokeDasharray="8 4"
+                    className="drop-shadow-[0_0_8px_#22c55e]"
+                  />
+                </svg>
+              </motion.div>
+              {/* Inner ring — counter-rotate */}
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-4"
+              >
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  <polygon
+                    points="50,5 90,27 90,73 50,95 10,73 10,27"
+                    fill="none"
+                    stroke="#4ade80"
+                    strokeWidth="2"
+                    className="drop-shadow-[0_0_12px_#22c55e]"
+                  />
+                </svg>
+              </motion.div>
+              {/* Center core pulse */}
+              <motion.div
+                animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <div className="w-8 h-8 bg-green-500 rounded-sm rotate-45 shadow-[0_0_25px_#22c55e,0_0_50px_#22c55e55]" />
+              </motion.div>
+            </div>
+
+            {/* Status text with typing effect */}
+            <div className="font-mono text-center space-y-3 relative z-10">
+              <motion.h2
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="text-green-400 text-xl md:text-2xl font-black tracking-widest"
+              >
+                TRANSMITTING DATA
+              </motion.h2>
+
+              {/* Fake terminal lines */}
+              <div className="text-xs text-green-500/60 space-y-1 max-w-xs mx-auto text-left">
+                <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                  {'>'} Encrypting payload...
+                </motion.p>
+                <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
+                  {'>'} Establishing secure channel...
+                </motion.p>
+                <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.4 }}>
+                  {'>'} Uploading squad intel...
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: [0, 1, 0.5, 1] }}
+                  transition={{ delay: 2.0, duration: 1.5, repeat: Infinity }}
+                >
+                  {'>'} Awaiting server confirmation
+                  <motion.span
+                    animate={{ opacity: [0, 1] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                  >
+                    _
+                  </motion.span>
+                </motion.p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-48 md:w-64 mx-auto mt-4">
+                <div className="h-1 bg-gray-800 rounded overflow-hidden">
+                  <motion.div
+                    initial={{ width: '0%' }}
+                    animate={{ width: ['0%', '60%', '65%', '90%'] }}
+                    transition={{ duration: 8, times: [0, 0.3, 0.7, 1], ease: 'easeOut' }}
+                    className="h-full bg-green-500 shadow-[0_0_10px_#22c55e]"
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[10px] text-green-500/40 font-mono">STATUS: ACTIVE</span>
+                  <motion.span
+                    className="text-[10px] text-green-500/40 font-mono"
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    STANDBY
+                  </motion.span>
+                </div>
+              </div>
+            </div>
+
+            {/* Corner decorations */}
+            <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-green-500/40" />
+            <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-green-500/40" />
+            <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-green-500/40" />
+            <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-green-500/40" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* SUCCESS MODAL */}
       <AnimatePresence>
         {showSuccessModal && (
@@ -442,7 +646,7 @@ export default function Frame2Reality() {
                 <h2 className="text-3xl font-black text-white italic mb-2">MISSION ACCOMPLISHED</h2>
                 <p className="text-gray-400 font-mono text-sm mb-6">Squad registration verified. Deployment orders sent to your comms channel.</p>
                 <div className="flex flex-col gap-2">
-                  <div className="text-green-500 text-xs font-mono animate-pulse">REDIRECTING TO ARCHIVES...</div>
+                  <div className="text-green-500 text-xs font-mono animate-pulse">REDIRECTING TO BASE...</div>
                   <div className="h-1 w-full bg-gray-800 rounded overflow-hidden">
                     <motion.div initial={{ width:'0%' }} animate={{ width:'100%' }}
                       transition={{ duration:4, ease:'linear' }} className="h-full bg-green-500" />
