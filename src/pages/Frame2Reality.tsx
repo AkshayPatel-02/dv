@@ -938,7 +938,7 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 4 - 5 members.  (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>
