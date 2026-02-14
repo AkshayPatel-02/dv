@@ -118,7 +118,7 @@ export default function Frame2Reality() {
   
   // Form State
   const [formStep, setFormStep] = useState(1);
-  const [teamSize, setTeamSize] = useState(3);
+  const [teamSize, setTeamSize] = useState(4);
   const [errors, setErrors] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
@@ -350,7 +350,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmcXil9oJTAUMfaLXfQ-93m9WKJSRP6mzEQqrPVEsB9sTcGsU-oe7MIqe4iL2k1UY-/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUSMdOwrhrERGYDJylcShIh1SyeRmHXHCipTnBebYG3efA-FfdVZ8-mP0QkB1_MfEt/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); 
@@ -1017,7 +1017,7 @@ export default function Frame2Reality() {
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD SIZE *</label>
                               <div className="flex gap-4">
-                                {[3,4].map(num => (
+                                {[4,5].map(num => (
                                   <label key={num} className={`flex-1 border p-3 text-center cursor-pointer transition-all rounded ${teamSize===num?'bg-green-500/20 border-green-500 text-green-400 font-bold':'bg-zinc-900 border-zinc-700 text-gray-500'}`}>
                                     <input type="radio" name="TeamSize" value={num} checked={teamSize===num} onChange={() => setTeamSize(num)} className="hidden"/>
                                     {num} MEMBERS

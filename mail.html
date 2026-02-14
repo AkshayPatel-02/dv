@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frame2Reality - Mission Briefing</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: 'Courier New', Courier, monospace;">
+  
+  <!-- Main Container -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000;">
+    <tr>
+      <td style="padding: 20px 10px;">
+        
+        <!-- Email Card -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #0a0a0a; border: 2px solid #22c55e; border-radius: 12px; overflow: hidden;">
+          
+          <!-- Header Section -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #065f46 0%, #22c55e 100%); padding: 40px 20px; text-align: center;">
+              <h1 style="margin: 0; color: #000000; font-size: 36px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,0,0,0.3);">
+                ⚡ MISSION ACCEPTED ⚡
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #000000; font-size: 14px; font-weight: bold;">
+                FRAME2REALITY DEPLOYMENT CONFIRMED
+              </p>
+            </td>
+          </tr>
+
+          <!-- Terminal Header Bar -->
+          <tr>
+            <td style="background-color: #1a1a1a; padding: 12px 20px; border-bottom: 1px solid #333333;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #ef4444; border-radius: 50%; margin-right: 6px;"></span>
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #eab308; border-radius: 50%; margin-right: 6px;"></span>
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: #22c55e; border-radius: 50%;"></span>
+                  </td>
+                  <td style="text-align: right;">
+                    <span style="color: #666666; font-size: 11px;">TERMINAL_MESSAGE.html</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 40px 30px; color: #ffffff;">
+              
+              <!-- Greeting -->
+              <p style="margin: 0 0 20px 0; color: #22c55e; font-size: 16px; font-weight: bold;">
+                &gt; COMMANDER ${details.leaderName.toUpperCase()},
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #ffffff; font-size: 14px; line-height: 1.6;">
+                Your squad <strong style="color: #22c55e;">${details.teamName}</strong> has been successfully registered for <strong style="color: #22c55e;">FRAME2REALITY</strong>, the ultimate gaming tournament hosted by <strong>DATA VEDHI</strong>.
+              </p>
+
+              <p style="margin: 0 0 30px 0; color: #a3a3a3; font-size: 13px; line-height: 1.6;">
+                Your deployment credentials have been logged in our mainframe. Prepare your squad for battle. Victory awaits those who are ready.
+              </p>
+
+              <!-- Mission Details Box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a1a; border: 1px solid #22c55e; border-radius: 8px; margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h2 style="margin: 0 0 15px 0; color: #22c55e; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333333; padding-bottom: 10px;">
+                      📋 SQUAD INTEL
+                    </h2>
+                    
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px; width: 140px;">Squad Name:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">${details.teamName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Squad Size:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">${details.teamSize} OPERATIVES</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Commander:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">${details.leaderName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Roll No:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">${details.leaderRoll}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Division:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">${details.leaderBranch} - ${details.leaderSection}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Payment Confirmation Box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a1a; border: 1px solid #22c55e; border-radius: 8px; margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h2 style="margin: 0 0 15px 0; color: #22c55e; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333333; padding-bottom: 10px;">
+                      💳 PAYMENT VERIFIED
+                    </h2>
+                    
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px; width: 140px;">Amount Paid:</td>
+                        <td style="padding: 8px 0; color: #22c55e; font-size: 13px; font-weight: bold;">₹${details.totalAmount}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">UTR Number:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold; font-family: 'Courier New', monospace;">${details.utrNumber}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Status:</td>
+                        <td style="padding: 8px 0;">
+                          <span style="display: inline-block; background-color: #22c55e; color: #000000; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                            ✓ CONFIRMED
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Event Details Box -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1a1a1a; border: 1px solid #22c55e; border-radius: 8px; margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h2 style="margin: 0 0 15px 0; color: #22c55e; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333333; padding-bottom: 10px;">
+                      🎮 EVENT BRIEFING
+                    </h2>
+                    
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px; width: 140px;">Event Name:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">FRAME2REALITY</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Organized By:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">DATA VEDHI</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Date & Time:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">TBA (Check Official Channels)</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #666666; font-size: 13px;">Venue:</td>
+                        <td style="padding: 8px 0; color: #ffffff; font-size: 13px; font-weight: bold;">Campus Grounds</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Next Steps -->
+              <div style="background-color: #0f172a; border-left: 4px solid #22c55e; padding: 20px; margin-bottom: 30px; border-radius: 4px;">
+                <h3 style="margin: 0 0 15px 0; color: #22c55e; font-size: 14px; text-transform: uppercase;">
+                  ⚠️ NEXT STEPS
+                </h3>
+                <ul style="margin: 0; padding-left: 20px; color: #a3a3a3; font-size: 13px; line-height: 1.8;">
+                  <li>Your payment will be verified within <strong style="color: #ffffff;">24 hours</strong></li>
+                  <li>Bring <strong style="color: #ffffff;">valid ID proof</strong> on event day</li>
+                  <li>Ensure all squad members arrive <strong style="color: #ffffff;">30 minutes early</strong></li>
+                  <li>Check your email for <strong style="color: #ffffff;">tournament schedule updates</strong></li>
+                  <li>Join our <strong style="color: #ffffff;">WhatsApp group</strong> for live updates (link TBA)</li>
+                </ul>
+              </div>
+
+              <!-- Terminal Output -->
+              <div style="background-color: #000000; border: 1px solid #22c55e; padding: 15px; border-radius: 6px; margin-bottom: 30px; font-family: 'Courier New', monospace;">
+                <p style="margin: 0; color: #22c55e; font-size: 12px; line-height: 1.6;">
+                  <span style="color: #666666;">$</span> system.log --status<br>
+                  <span style="color: #666666;">&gt;</span> Registration: <span style="color: #22c55e;">SUCCESS</span><br>
+                  <span style="color: #666666;">&gt;</span> Payment: <span style="color: #22c55e;">VERIFIED</span><br>
+                  <span style="color: #666666;">&gt;</span> Squad Status: <span style="color: #22c55e;">ACTIVE</span><br>
+                  <span style="color: #666666;">&gt;</span> Mission: <span style="color: #eab308;">PENDING DEPLOYMENT</span><br>
+                  <span style="color: #666666;">$</span> <span style="animation: blink 1s infinite;">_</span>
+                </p>
+              </div>
+
+              <!-- Closing Message -->
+              <p style="margin: 0 0 10px 0; color: #ffffff; font-size: 14px; line-height: 1.6;">
+                Good luck, Commander. We'll see you on the battlefield.
+              </p>
+              
+              <p style="margin: 0 0 30px 0; color: #22c55e; font-size: 14px; font-weight: bold;">
+                — DATA VEDHI COMMAND CENTER
+              </p>
+
+              <!-- Support Section -->
+              <div style="background-color: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px solid #333333;">
+                <p style="margin: 0 0 8px 0; color: #666666; font-size: 12px;">
+                  <strong style="color: #ffffff;">Need Assistance?</strong>
+                </p>
+                <p style="margin: 0; color: #a3a3a3; font-size: 12px; line-height: 1.6;">
+                  Contact us at: <a href="mailto:datavedhi@gcet.ac.in" style="color: #22c55e; text-decoration: none;">datavedhi@gcet.ac.in</a><br>
+                  Or reach out via our official social media channels.
+                </p>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0a0a0a; padding: 30px 20px; text-align: center; border-top: 1px solid #333333;">
+              <p style="margin: 0 0 10px 0; color: #22c55e; font-size: 16px; font-weight: bold;">
+                DATA VEDHI
+              </p>
+              <p style="margin: 0 0 15px 0; color: #666666; font-size: 11px; line-height: 1.6;">
+                The Official Tech & Gaming Club of GCET<br>
+                Showcasing Innovation. Building Community. Gaming Excellence.
+              </p>
+              <div style="margin-bottom: 15px;">
+                <a href="#" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                  <span style="display: inline-block; width: 32px; height: 32px; background-color: #1a1a1a; border: 1px solid #333333; border-radius: 50%; line-height: 32px; color: #22c55e; font-size: 16px;">📷</span>
+                </a>
+                <a href="#" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                  <span style="display: inline-block; width: 32px; height: 32px; background-color: #1a1a1a; border: 1px solid #333333; border-radius: 50%; line-height: 32px; color: #22c55e; font-size: 16px;">📘</span>
+                </a>
+                <a href="#" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                  <span style="display: inline-block; width: 32px; height: 32px; background-color: #1a1a1a; border: 1px solid #333333; border-radius: 50%; line-height: 32px; color: #22c55e; font-size: 16px;">💬</span>
+                </a>
+              </div>
+              <p style="margin: 0; color: #333333; font-size: 10px;">
+                © 2026 Data Vedhi. All rights reserved.<br>
+                This is an automated message. Please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
