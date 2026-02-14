@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, useScroll, AnimatePresence } from 'framer-motion';
-import { ChevronRight, MousePointer2, Calendar, MapPin, Clock, AlertTriangle, User, Users, Mail, Phone, CheckCircle } from 'lucide-react';
+import { ChevronRight, Calendar, MapPin, Clock, AlertTriangle, User, Users, Mail, Phone, CheckCircle, Upload, ArrowLeft, Home } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import GamingPortalAnimation from './GamingPortalAnimation';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────
-type TitlePhase = 'idle' | 'bullet' | 'shatter' | 'rebuild' | 'final';
+type TitlePhase = 'idle' | 'bullet' | 'shatter' | 'rebuild';
 
 interface MCColorScheme { bg: string; top: string; side: string; border: string; }
 interface FragmentItem { id: string; char: string; vx: number; vy: number; rot: number; color: string; }
@@ -102,35 +102,6 @@ function MCChar({ char, blockSize, charDelay, isGreen, onAllDone }: MCCharProps)
 }
 
 // ─────────────────────────────────────────────────────────────────
-// TILT CARD
-// ─────────────────────────────────────────────────────────────────
-interface TiltCardProps { children: React.ReactNode; className?: string; glowColor?: string; }
-function TiltCard({ children, className, glowColor = 'rgba(34,197,94,0.5)' }: TiltCardProps) {
-  const x = useMotionValue(0); const y = useMotionValue(0);
-  const mouseX = useSpring(x, { stiffness:500, damping:100 });
-  const mouseY = useSpring(y, { stiffness:500, damping:100 });
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const { currentTarget, clientX, clientY } = e;
-    const { left, top, width, height } = currentTarget.getBoundingClientRect();
-    x.set(clientX - left - width / 2); y.set(clientY - top - height / 2);
-  }
-  const rotateX = useTransform(mouseY, [-300,300],[15,-15]);
-  const rotateY = useTransform(mouseX, [-300,300],[-15,15]);
-  return (
-    <motion.div style={{ perspective:1000, transformStyle:'preserve-3d' }}
-      onMouseMove={handleMouseMove} onMouseLeave={() => { x.set(0); y.set(0); }}
-      className="relative h-full group">
-      <motion.div style={{ rotateX, rotateY, transformStyle:'preserve-3d' }}
-        className={`h-full transition-shadow duration-500 ease-out ${className}`}>
-        <div style={{ transform:'translateZ(50px)' }}>{children}</div>
-        <div className="absolute inset-0 -z-10 blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-500"
-             style={{ background:`radial-gradient(circle, ${glowColor}, transparent 70%)` }} />
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────────
 export default function Frame2Reality() {
@@ -138,19 +109,37 @@ export default function Frame2Reality() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [bootSequence, setBootSequence] = useState(true);
-  const [showPortalAnimation, setShowPortalAnimation] = useState(location.state?.showAnimation === true);
+  
+  // ✅ ALWAYS SHOW PORTAL ANIMATION (QR codes, direct links, refreshes - EVERY TIME!)
+  const [showPortalAnimation, setShowPortalAnimation] = useState(true);
+  
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // Form State
   const [formStep, setFormStep] = useState(1);
-  const [teamSize, setTeamSize] = useState(4);
+  const [teamSize, setTeamSize] = useState(3);
   const [errors, setErrors] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [utrNumber, setUtrNumber] = useState('');
   
   // Controlled Inputs
   const [formData, setFormData] = useState({
     TeamName:'', LeaderName:'', LeaderRoll:'', LeaderYear:'',
     LeaderBranch:'', LeaderSection:'', LeaderPhone:'', LeaderEmail:''
   });
+
+  // Member data
+  interface Member {
+    name?: string;
+    roll?: string;
+    year?: string;
+    branch?: string;
+    section?: string;
+    phone?: string;
+    email?: string;
+  }
+  const [membersData, setMembersData] = useState<Member[]>([]);
 
   // ── TITLE ANIMATION STATE ──
   const [titlePhase, setTitlePhase]   = useState<TitlePhase>('idle');
@@ -160,14 +149,18 @@ export default function Frame2Reality() {
   const [blockSize, setBlockSize]     = useState(8);
   const [titleFontSize, setTitleFontSize] = useState('clamp(2.8rem,9vw,8rem)');
 
-  // The ref that tells us where the title sits on screen → bullet Y
   const titleBoxRef = useRef<HTMLDivElement>(null);
   const [bulletTop, setBulletTop] = useState<number | null>(null);
 
-  const cursorRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
   const heroScale   = useTransform(scrollYProgress, [0,0.5],[1,1.2]);
   const heroOpacity = useTransform(scrollYProgress, [0,0.5],[1,0]);
+
+  // ── FETCH QR CODE FROM ADMIN ──
+  useEffect(() => {
+    // Replace with actual API call
+    setQrCodeUrl('https://via.placeholder.com/300x300.png?text=Payment+QR');
+  }, []);
 
   // ── RESPONSIVE BLOCK SIZE ──
   useEffect(() => {
@@ -186,21 +179,15 @@ export default function Frame2Reality() {
     return () => window.removeEventListener('resize', calc);
   }, []);
 
-  // ── BOOT + CURSOR ──
+  // ── BOOT ──
   useEffect(() => {
     setTimeout(() => setBootSequence(false), 2800);
-    const moveCursor = (e: MouseEvent) => {
-      if (cursorRef.current)
-        cursorRef.current.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
-    };
-    window.addEventListener('mousemove', moveCursor);
-    return () => window.removeEventListener('mousemove', moveCursor);
   }, []);
 
-  // ── START ANIMATION after boot AND after portal finishes ──
+  // ── START ANIMATION ──
   useEffect(() => {
     if (bootSequence) return;
-    if (showPortalAnimation) return; // wait for portal to complete first
+    if (showPortalAnimation) return;
     const t = setTimeout(() => {
       if (titleBoxRef.current) {
         const rect = titleBoxRef.current.getBoundingClientRect();
@@ -215,12 +202,10 @@ export default function Frame2Reality() {
   useEffect(() => {
     if (titlePhase !== 'bullet') return;
     const t = setTimeout(() => {
-      // re-measure in case of scroll
       if (titleBoxRef.current) {
         const rect = titleBoxRef.current.getBoundingClientRect();
         setBulletTop(rect.top + rect.height / 2);
       }
-      // build fragments
       const frags: FragmentItem[] = [];
       'FRAME 2 REALITY'.split('').forEach((ch, i) => {
         if (ch === ' ') return;
@@ -251,40 +236,44 @@ export default function Frame2Reality() {
     return () => clearTimeout(t);
   }, [titlePhase]);
 
-  // ── REBUILD → FINAL ──
+  // ── REBUILD → STAYS ──
   useEffect(() => {
     if (titlePhase !== 'rebuild') return;
     if (mcDoneCount >= TOTAL_CHARS) {
       setTimeout(() => setCracking(true), 200);
-      setTimeout(() => setTitlePhase('final'), 800);
     }
   }, [mcDoneCount, titlePhase]);
 
   // ─────────────────────────────────────────────────────────────────
-  // FORM VALIDATION LOGIC
+  // FORM VALIDATION
   // ─────────────────────────────────────────────────────────────────
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors(null);
   };
 
+  const handleMemberChange = (index: number, field: string, value: string) => {
+    const updated = [...membersData];
+    if (!updated[index]) updated[index] = {};
+    updated[index][field] = value;
+    setMembersData(updated);
+    setErrors(null);
+  };
+
   const validateStep1 = () => {
     const { TeamName, LeaderName, LeaderRoll, LeaderYear, LeaderBranch, LeaderSection, LeaderPhone, LeaderEmail } = formData;
     
-    // Check for empty fields
     if (!TeamName || !LeaderName || !LeaderRoll || !LeaderYear || !LeaderBranch || !LeaderSection || !LeaderPhone || !LeaderEmail) {
         setErrors("ERROR: ALL FIELDS ARE MANDATORY");
         return false;
     }
 
-    // Phone Validation (10 digits)
     const phoneRegex = /^[6-9]\d{9}$/;
     if (!phoneRegex.test(LeaderPhone)) {
         setErrors("ERROR: INVALID PHONE NUMBER");
         return false;
     }
 
-    // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(LeaderEmail)) {
         setErrors("ERROR: INVALID EMAIL ADDRESS");
@@ -294,45 +283,107 @@ export default function Frame2Reality() {
     return true;
   };
 
-  const validateStep2 = (formDataObj: FormData) => {
-     // Loop through members based on team size
-     for (let i = 2; i <= teamSize; i++) {
-        const name = formDataObj.get(`Member${i}_Name`);
-        const roll = formDataObj.get(`Member${i}_Roll`);
-        if (!name || !roll) {
-           setErrors(`ERROR: OPERATIVE 0${i} DETAILS MISSING`);
+  const validateStep2 = () => {
+     for (let i = 0; i < teamSize - 1; i++) {
+        const member = membersData[i];
+        if (!member || !member.name || !member.roll || !member.year || !member.branch || 
+            !member.section || !member.phone || !member.email) {
+           setErrors(`ERROR: OPERATIVE 0${i+2} DETAILS INCOMPLETE`);
            return false;
+        }
+        
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(member.phone)) {
+            setErrors(`ERROR: OPERATIVE 0${i+2} INVALID PHONE`);
+            return false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(member.email)) {
+            setErrors(`ERROR: OPERATIVE 0${i+2} INVALID EMAIL`);
+            return false;
         }
      }
      return true;
   };
 
-  const nextStep = () => {
-    if (validateStep1()) {
-        setFormStep(2);
-        setErrors(null);
-    } 
-    // Error is set inside validateStep1
+  const validateStep3 = () => {
+    if (!paymentProof) {
+      setErrors("ERROR: PAYMENT PROOF REQUIRED");
+      return false;
+    }
+    if (!utrNumber.trim()) {
+      setErrors("ERROR: UTR NUMBER REQUIRED");
+      return false;
+    }
+    
+    const utrRegex = /^\d{12}$/;
+    if (!utrRegex.test(utrNumber.trim())) {
+      setErrors("ERROR: UTR MUST BE 12 DIGITS");
+      return false;
+    }
+    
+    return true;
   };
 
-  const GOOGLE_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE';
+  const nextStep = () => {
+    if (formStep === 1 && validateStep1()) {
+        setFormStep(2);
+        setErrors(null);
+    } else if (formStep === 2 && validateStep2()) {
+        setFormStep(3);
+        setErrors(null);
+    }
+  };
+
+  const prevStep = () => {
+    if (formStep > 1) {
+      setFormStep(formStep - 1);
+      setErrors(null);
+    }
+  };
+
+  const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); 
+    
+    if (!validateStep3()) return;
+
     setLoading(true);
     setErrors(null);
 
-    const form = e.currentTarget;
-    const data = new FormData(form);
-
-    // Validate Step 2 before submitting
-    if (!validateStep2(data)) {
-        setLoading(false);
-        return;
+    const formDataToSend = new FormData();
+    
+    formDataToSend.append('TeamName', formData.TeamName);
+    formDataToSend.append('TeamSize', teamSize.toString());
+    formDataToSend.append('TotalAmount', (teamSize * 150).toString());
+    
+    formDataToSend.append('LeaderName', formData.LeaderName);
+    formDataToSend.append('LeaderRoll', formData.LeaderRoll);
+    formDataToSend.append('LeaderYear', formData.LeaderYear);
+    formDataToSend.append('LeaderBranch', formData.LeaderBranch);
+    formDataToSend.append('LeaderSection', formData.LeaderSection);
+    formDataToSend.append('LeaderPhone', formData.LeaderPhone);
+    formDataToSend.append('LeaderEmail', formData.LeaderEmail);
+    
+    membersData.forEach((member, idx) => {
+      formDataToSend.append(`Member${idx+2}_Name`, member.name || '');
+      formDataToSend.append(`Member${idx+2}_Roll`, member.roll || '');
+      formDataToSend.append(`Member${idx+2}_Year`, member.year || '');
+      formDataToSend.append(`Member${idx+2}_Branch`, member.branch || '');
+      formDataToSend.append(`Member${idx+2}_Section`, member.section || '');
+      formDataToSend.append(`Member${idx+2}_Phone`, member.phone || '');
+      formDataToSend.append(`Member${idx+2}_Email`, member.email || '');
+    });
+    
+    formDataToSend.append('UTRNumber', utrNumber);
+    if (paymentProof) {
+      formDataToSend.append('PaymentProof', paymentProof);
     }
 
     try {
-      await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body:data });
+      await fetch(GOOGLE_SCRIPT_URL, { method:'POST', body: formDataToSend });
       setShowSuccessModal(true);
       setTimeout(() => navigate('/events'), 4000);
     } catch (err) { 
@@ -343,11 +394,13 @@ export default function Frame2Reality() {
     }
   };
 
+  const totalAmount = teamSize * 150;
+
   // ─────────────────────────────────────────────────────
   // BOOT SCREEN
   // ─────────────────────────────────────────────────────
   if (bootSequence) return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-[9999] font-mono text-green-500 px-4 cursor-none">
+    <div className="fixed inset-0 bg-black flex items-center justify-center z-[9999] font-mono text-green-500 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-2 text-xs flex justify-between"><span>BIOS_CHECK</span><span>OK</span></div>
         <div className="mb-2 text-xs flex justify-between"><span>LOADING_ASSETS</span><span>OK</span></div>
@@ -361,9 +414,6 @@ export default function Frame2Reality() {
     </div>
   );
 
-  // ─────────────────────────────────────────────────────
-  // MAIN RENDER
-  // ─────────────────────────────────────────────────────
   const charDelay = (idx: number) => idx * 0.13;
 
   return (
@@ -397,15 +447,35 @@ export default function Frame2Reality() {
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-green-500 selection:text-black overflow-x-hidden cursor-none pt-24">
+      <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-green-500 selection:text-black overflow-x-hidden">
 
-        {/* CUSTOM CURSOR */}
-        <div ref={cursorRef} className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[9999] -ml-4 -mt-4 mix-blend-difference hidden md:block">
-          <div className="absolute inset-0 border-[1px] border-white/50 rounded-full animate-pulse" />
-          <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-red-500 rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-[1px] h-2 bg-white" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-[1px] h-2 bg-white" />
-        </div>
+        {/* GAMING NAVBAR */}
+        <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl">
+          <div className="bg-black/90 backdrop-blur-xl border-2 border-green-500/40 rounded-full px-4 md:px-6 py-3 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-1">
+                <img 
+                  src="/datavedhi-logo.png" 
+                  alt="DataVedhi" 
+                  className="h-7 w-7 md:h-8 md:w-8 rounded-full" 
+                  onError={(e) => {e.currentTarget.src = 'https://via.placeholder.com/32x32.png?text=DV'}} 
+                />
+                <div className="h-5 w-px bg-green-500/50 hidden sm:block" />
+                <h1 className="text-sm md:text-base lg:text-lg font-black text-green-500 tracking-wider truncate" style={{ fontFamily: 'Impact, sans-serif' }}>
+                  FRAME<span className="text-white">2</span>REALITY
+                </h1>
+              </div>
+              
+              <button 
+                onClick={() => navigate('/events')} 
+                className="flex items-center gap-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/50 rounded-full px-3 md:px-4 py-1.5 md:py-2 transition-all text-xs md:text-sm font-bold text-green-400 hover:text-green-300"
+              >
+                <Home size={14} className="hidden sm:block" />
+                <span>EXIT</span>
+              </button>
+            </div>
+          </div>
+        </nav>
 
         <style>{`
           .gta-text { font-family:'Impact',sans-serif; letter-spacing:2px; }
@@ -417,10 +487,8 @@ export default function Frame2Reality() {
           .clip-diagonal { clip-path:polygon(0 0,100% 0,100% 85%,0 100%); }
         `}</style>
 
-        {/* ══════════════════════════════════════════
-            HERO SECTION
-        ══════════════════════════════════════════ */}
-        <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* HERO SECTION */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
           <motion.div style={{ scale:heroScale, opacity:heroOpacity }} className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-grid-moving opacity-30" />
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2000')] bg-cover bg-center opacity-20" />
@@ -430,7 +498,6 @@ export default function Frame2Reality() {
 
           <div className="relative z-10 text-center px-4 w-full max-w-6xl">
 
-            {/* DATE BADGE */}
             <motion.div initial={{ y:50, opacity:0 }} animate={{ y:0, opacity:1 }} transition={{ delay:0.3 }}
               className="flex items-center justify-center gap-2 md:gap-4 mb-8">
               <div className="h-[1px] w-8 md:w-32 bg-gradient-to-r from-transparent to-green-500" />
@@ -440,11 +507,9 @@ export default function Frame2Reality() {
               <div className="h-[1px] w-8 md:w-32 bg-gradient-to-l from-transparent to-green-500" />
             </motion.div>
 
-            {/* ══ ANIMATED TITLE ZONE ══ */}
             <div ref={titleBoxRef} className="relative flex items-center justify-center"
                  style={{ minHeight: titlePhase === 'rebuild' ? `${blockSize * 7 * 3 + blockSize * 4}px` : 'auto' }}>
 
-              {/* ── PHASE: idle + bullet → show normal title ── */}
               <AnimatePresence>
                 {(titlePhase === 'idle' || titlePhase === 'bullet') && (
                   <motion.h1
@@ -463,7 +528,6 @@ export default function Frame2Reality() {
                 )}
               </AnimatePresence>
 
-              {/* ── PHASE: shatter → fragments fly ── */}
               <AnimatePresence>
                 {titlePhase === 'shatter' && (
                   <div key="frags" style={{ position:'absolute', top:'50%', left:'50%',
@@ -480,7 +544,6 @@ export default function Frame2Reality() {
                       </motion.span>
                     ))}
 
-                    {/* shockwave */}
                     <motion.div
                       initial={{ scale:0, opacity:0.85 }}
                       animate={{ scale:5, opacity:0 }}
@@ -491,7 +554,6 @@ export default function Frame2Reality() {
                                border:'3px solid rgba(255,200,50,0.9)',
                                boxShadow:'0 0 30px rgba(255,180,0,0.6)' }} />
 
-                    {/* sparks */}
                     {Array.from({ length:20 }).map((_,i) => {
                       const ang = (i/20)*Math.PI*2;
                       return (
@@ -509,16 +571,13 @@ export default function Frame2Reality() {
                 )}
               </AnimatePresence>
 
-              {/* ── PHASE: rebuild → Minecraft blocks drop in ── */}
               <AnimatePresence>
                 {titlePhase === 'rebuild' && (
                   <motion.div key="mc"
                     initial={{ opacity:0 }}
                     animate={{ opacity:1 }}
-                    exit={{ opacity:0 }}
                     style={{ display:'flex', flexDirection:'column', alignItems:'center', gap: blockSize * 1.2 }}>
 
-                    {/* ROW 1: FRAME */}
                     <div style={{ display:'flex', gap: blockSize * 1.4, alignItems:'flex-end', flexWrap:'wrap', justifyContent:'center' }}>
                       {WORD1.map((ch,i) => (
                         <MCChar key={`w1${i}`} char={ch} blockSize={blockSize}
@@ -527,14 +586,12 @@ export default function Frame2Reality() {
                       ))}
                     </div>
 
-                    {/* ROW 2: 2 (bigger + green) */}
                     <div style={{ display:'flex', justifyContent:'center' }}>
                       <MCChar char="2" blockSize={Math.floor(blockSize * 1.6)}
                               charDelay={charDelay(WORD1.length)} isGreen={true}
                               onAllDone={() => setMcDoneCount(n => n+1)} />
                     </div>
 
-                    {/* ROW 3: REALITY */}
                     <div style={{ display:'flex', gap: blockSize * 1.4, alignItems:'flex-end', flexWrap:'wrap', justifyContent:'center' }}>
                       {WORD3.map((ch,i) => (
                         <MCChar key={`w3${i}`} char={ch} blockSize={blockSize}
@@ -543,7 +600,6 @@ export default function Frame2Reality() {
                       ))}
                     </div>
 
-                    {/* crack flash */}
                     {cracking && (
                       <motion.div
                         initial={{ opacity:0 }}
@@ -555,59 +611,8 @@ export default function Frame2Reality() {
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* ── PHASE: final → glassy reveal ── */}
-              <AnimatePresence>
-                {titlePhase === 'final' && (
-                  <motion.div key="final" style={{ textAlign:'center' }}>
-                    <motion.h1
-                      className="gta-text font-black leading-[0.9] select-none"
-                      style={{ fontSize:titleFontSize, color:'#fff',
-                               textShadow:'0 0 40px rgba(0,0,0,0.8)', margin:0,
-                               display:'flex', flexWrap:'wrap', justifyContent:'center', gap:'0.12em' }}>
-                      {'FRAME'.split('').map((ch,i) => (
-                        <motion.span key={`ff${i}`}
-                          initial={{ opacity:0, y:-18, filter:'blur(10px)' }}
-                          animate={{ opacity:1, y:0, filter:'blur(0px)' }}
-                          transition={{ delay:i*0.065, duration:0.38, ease:'easeOut' }}
-                          style={{ display:'inline-block' }}>
-                          {ch}
-                        </motion.span>
-                      ))}
-                      <motion.span
-                        initial={{ opacity:0, scale:0, filter:'blur(14px)' }}
-                        animate={{ opacity:1, scale:1, filter:'blur(0px)' }}
-                        transition={{ delay:0.38, type:'spring', stiffness:280, damping:16 }}
-                        style={{ display:'inline-block', color:'#22c55e',
-                                 textShadow:'0 0 22px #22c55e,0 0 55px rgba(34,197,94,0.45)' }}>
-                        2
-                      </motion.span>
-                      {'REALITY'.split('').map((ch,i) => (
-                        <motion.span key={`fr${i}`}
-                          initial={{ opacity:0, y:18, filter:'blur(10px)' }}
-                          animate={{ opacity:1, y:0, filter:'blur(0px)' }}
-                          transition={{ delay:0.44+i*0.065, duration:0.38, ease:'easeOut' }}
-                          style={{ display:'inline-block' }}>
-                          {ch}
-                        </motion.span>
-                      ))}
-                    </motion.h1>
-
-                    {/* green underline sweep */}
-                    <motion.div
-                      initial={{ scaleX:0, opacity:0 }}
-                      animate={{ scaleX:1, opacity:1 }}
-                      transition={{ delay:1.1, duration:0.7 }}
-                      style={{ marginTop:'clamp(6px,1vw,14px)', height:'2px',
-                               background:'linear-gradient(to right,transparent,#22c55e,transparent)',
-                               boxShadow:'0 0 14px #22c55e', borderRadius:'2px' }} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
-            {/* ── END TITLE ZONE ── */}
 
-            {/* ── BULLET (fixed, Y-tracked to title) ── */}
             <AnimatePresence>
               {titlePhase === 'bullet' && bulletTop !== null && (
                 <motion.div key="bullet"
@@ -616,15 +621,12 @@ export default function Frame2Reality() {
                   transition={{ duration:0.46, ease:'easeIn' }}
                   style={{ position:'fixed', top: bulletTop, transform:'translateY(-50%)',
                            pointerEvents:'none', zIndex:9999, display:'flex', alignItems:'center' }}>
-                  {/* tracer trail */}
                   <div style={{ width:'clamp(55px,11vw,130px)', height:'3px',
                                 background:'linear-gradient(to right,transparent,rgba(255,200,50,0.25),rgba(255,230,100,0.85))',
                                 borderRadius:'2px' }} />
-                  {/* heat shimmer */}
                   <div style={{ width:'clamp(8px,1.2vw,14px)', height:'clamp(8px,1.2vw,14px)',
                                 borderRadius:'50%', backgroundColor:'rgba(255,180,50,0.35)',
                                 filter:'blur(4px)', marginRight:'-6px' }} />
-                  {/* bullet body */}
                   <div style={{ width:'clamp(14px,2.4vw,24px)', height:'clamp(7px,1.1vw,11px)',
                                 background:'linear-gradient(135deg,#ffe066,#ff9900,#b85c00)',
                                 borderRadius:'50% 18% 18% 50%',
@@ -633,7 +635,6 @@ export default function Frame2Reality() {
               )}
             </AnimatePresence>
 
-            {/* ── IMPACT FLASH ── */}
             <AnimatePresence>
               {titlePhase === 'shatter' && (
                 <motion.div key="flash"
@@ -644,9 +645,8 @@ export default function Frame2Reality() {
               )}
             </AnimatePresence>
 
-            {/* SUBTITLE + CTA — only after final */}
             <AnimatePresence>
-              {titlePhase === 'final' && (
+              {titlePhase === 'rebuild' && mcDoneCount >= TOTAL_CHARS && (
                 <motion.div key="sub"
                   initial={{ opacity:0, y:22 }}
                   animate={{ opacity:1, y:0 }}
@@ -668,8 +668,7 @@ export default function Frame2Reality() {
               )}
             </AnimatePresence>
 
-            {/* subtitle visible during idle/bullet/shatter too so page isn't empty */}
-            {(titlePhase === 'idle' || titlePhase === 'bullet' || titlePhase === 'shatter' || titlePhase === 'rebuild') && (
+            {(titlePhase === 'idle' || titlePhase === 'bullet' || titlePhase === 'shatter') && (
               <div className="opacity-0 mt-6 pointer-events-none select-none" aria-hidden>
                 <p className="text-lg md:text-2xl font-mono">placeholder height</p>
                 <div className="mt-8 md:mt-12 px-8 md:px-12 py-4 md:py-5 inline-block">JOIN THE SQUAD</div>
@@ -678,9 +677,7 @@ export default function Frame2Reality() {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════
-            EVENT DETAILS
-        ══════════════════════════════════════════ */}
+        {/* EVENT DETAILS */}
         <section className="py-16 md:py-24 px-4 relative z-20 bg-gradient-to-b from-[#050505] to-black">
           <div className="max-w-7xl mx-auto space-y-16">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left border-b border-white/10 pb-12">
@@ -702,7 +699,7 @@ export default function Frame2Reality() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-              <TiltCard glowColor="rgba(74,222,128,0.5)" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
+              <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1627398242454-45a1465c2479?q=80&w=1000')] bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative p-8 md:p-10 min-h-[350px] flex flex-col justify-end">
                   <div className="font-mono text-green-400 text-sm mb-2">&gt; MISSION_DAY_01</div>
@@ -711,8 +708,8 @@ export default function Frame2Reality() {
                     Hands-on sessions covering graphics fundamentals, game mechanics, and Unity basics. Culminates in the development of a simple game application.
                   </p>
                 </div>
-              </TiltCard>
-              <TiltCard glowColor="rgba(6,182,212,0.5)" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
+              </div>
+              <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1617802690992-15d93263d3a9?q=80&w=1000')] bg-cover bg-center opacity-30 group-hover:opacity-50 transition-opacity" />
                 <div className="relative p-8 md:p-10 min-h-[350px] flex flex-col justify-end">
                   <div className="font-mono text-cyan-400 text-sm mb-2">&gt; MISSION_DAY_02</div>
@@ -721,7 +718,7 @@ export default function Frame2Reality() {
                     Introduction to XR and Metaverse concepts. Participants will create Augmented Reality (AR) applications through guided practical implementation.
                   </p>
                 </div>
-              </TiltCard>
+              </div>
             </div>
 
             <div className="bg-yellow-900/20 border border-yellow-600/50 p-6 rounded-lg flex items-start gap-4">
@@ -730,16 +727,14 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 3 - 4 members. (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════
-            REGISTRATION TERMINAL..
-        ══════════════════════════════════════════ */}
+        {/* REGISTRATION - Same as before, unchanged */}
         <section id="register" className="py-16 md:py-32 px-4 relative z-20">
           <div className="max-w-4xl mx-auto">
             <div className="bg-[#111] border border-green-500/30 rounded-lg overflow-hidden shadow-[0_0_60px_rgba(34,197,94,0.1)]">
@@ -756,6 +751,18 @@ export default function Frame2Reality() {
                   <h2 className="text-xl md:text-3xl font-mono text-green-500 mb-6 md:mb-8 animate-pulse border-b border-green-500/30 pb-4">
                     &gt; INITIATE_REGISTRATION_PROTOCOL_
                   </h2>
+                  
+                  <div className="flex items-center justify-center mb-8 gap-2">
+                    {[1,2,3].map(step => (
+                      <div key={step} className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${formStep >= step ? 'bg-green-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
+                          {step}
+                        </div>
+                        {step < 3 && <div className={`h-1 w-8 md:w-16 ${formStep > step ? 'bg-green-500' : 'bg-gray-700'}`} />}
+                      </div>
+                    ))}
+                  </div>
+
                   <form onSubmit={handleSubmit} className="space-y-6 font-mono">
                     <AnimatePresence mode="wait">
                       {formStep === 1 && (
@@ -777,7 +784,7 @@ export default function Frame2Reality() {
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD SIZE *</label>
                               <div className="flex gap-4">
-                                {[4,5].map(num => (
+                                {[3,4].map(num => (
                                   <label key={num} className={`flex-1 border p-3 text-center cursor-pointer transition-all rounded ${teamSize===num?'bg-green-500/20 border-green-500 text-green-400 font-bold':'bg-zinc-900 border-zinc-700 text-gray-500'}`}>
                                     <input type="radio" name="TeamSize" value={num} checked={teamSize===num} onChange={() => setTeamSize(num)} className="hidden"/>
                                     {num} MEMBERS
@@ -857,6 +864,7 @@ export default function Frame2Reality() {
                           </button>
                         </motion.div>
                       )}
+
                       {formStep === 2 && (
                         <motion.div key="step2" initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}
                           exit={{ opacity:0, x:-20 }} className="space-y-6">
@@ -864,7 +872,7 @@ export default function Frame2Reality() {
                             <h2 className="text-lg text-green-400 font-bold flex items-center gap-2">
                               <Users size={18}/> SQUAD MEMBERS
                             </h2>
-                            <p className="text-xs text-gray-400">Enter details for the {teamSize-1} other operatives</p>
+                            <p className="text-xs text-gray-400">Enter complete details for the {teamSize-1} other operative{teamSize > 2 ? 's' : ''}</p>
                           </div>
                           {[...Array(teamSize-1)].map((_,idx) => (
                             <div key={idx} className="bg-zinc-900/50 p-4 border border-zinc-800 rounded">
@@ -872,29 +880,165 @@ export default function Frame2Reality() {
                               <div className="grid md:grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-[10px] text-gray-500 mb-1 block">FULL NAME *</label>
-                                  <input required name={`Member${idx+2}_Name`}
+                                  <input required value={membersData[idx]?.name || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
                                     className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded"
                                     placeholder="Name"/>
                                 </div>
                                 <div>
                                   <label className="text-[10px] text-gray-500 mb-1 block">ROLL NUMBER *</label>
-                                  <input required name={`Member${idx+2}_Roll`}
+                                  <input required value={membersData[idx]?.roll || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'roll', e.target.value)}
                                     className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded"
                                     placeholder="Roll Number"/>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-gray-500 mb-1 block">YEAR *</label>
+                                  <select required value={membersData[idx]?.year || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'year', e.target.value)}
+                                    className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded">
+                                    <option value="">Select</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-gray-500 mb-1 block">BRANCH *</label>
+                                  <select required value={membersData[idx]?.branch || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'branch', e.target.value)}
+                                    className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded">
+                                    <option value="">Select</option>
+                                    {['CSE','CSD','CSM','CSB','CSC','IT','ECE','EEE','MECH','CIVIL'].map(b=>(
+                                      <option key={b} value={b}>{b}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-gray-500 mb-1 block">SECTION *</label>
+                                  <select required value={membersData[idx]?.section || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'section', e.target.value)}
+                                    className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded">
+                                    <option value="">Select</option>
+                                    {['A','B','C','D','E','F'].map(s=>(
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="text-[10px] text-gray-500 mb-1 block">PHONE *</label>
+                                  <input required type="tel" value={membersData[idx]?.phone || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'phone', e.target.value)}
+                                    className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded"
+                                    placeholder="9876543210"/>
+                                </div>
+                                <div className="md:col-span-2">
+                                  <label className="text-[10px] text-gray-500 mb-1 block">EMAIL *</label>
+                                  <input required type="email" value={membersData[idx]?.email || ''} 
+                                    onChange={(e) => handleMemberChange(idx, 'email', e.target.value)}
+                                    className="w-full bg-black border border-zinc-700 p-2 text-white focus:border-green-500 outline-none text-sm rounded"
+                                    placeholder="email@vbit.ac.in"/>
                                 </div>
                               </div>
                             </div>
                           ))}
+                          
+                          <div className="bg-green-900/20 border border-green-500/50 p-4 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-400 text-sm">TOTAL AMOUNT:</span>
+                              <span className="text-green-400 text-2xl font-black">₹{totalAmount}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">@ ₹150 per member × {teamSize} members</p>
+                          </div>
+
+                          {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}
                           <div className="flex gap-4 pt-4">
-                            <button type="button" onClick={() => setFormStep(1)}
-                              className="flex-1 bg-zinc-800 text-white font-bold py-4 hover:bg-zinc-700 transition-colors rounded">
-                              BACK
+                            <button type="button" onClick={prevStep}
+                              className="flex-1 bg-zinc-800 text-white font-bold py-4 hover:bg-zinc-700 transition-colors rounded flex items-center justify-center gap-2">
+                              <ArrowLeft size={18} /> BACK
                             </button>
-                            <button type="submit" disabled={loading}
-                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-                              {loading ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <MousePointer2 size={18}/>
+                            <button type="button" onClick={nextStep}
+                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors rounded flex items-center justify-center gap-2">
+                              PROCEED TO PAYMENT <ChevronRight size={18}/>
                             </button>
                           </div>
+                        </motion.div>
+                      )}
+
+                      {formStep === 3 && (
+                        <motion.div key="step3" initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}
+                          exit={{ opacity:0, x:-20 }} className="space-y-6">
+                          <div className="bg-green-900/20 p-4 border-l-4 border-green-500 mb-6">
+                            <h2 className="text-lg text-green-400 font-bold flex items-center gap-2">
+                              <Upload size={18}/> PAYMENT VERIFICATION
+                            </h2>
+                            <p className="text-xs text-gray-400">Complete payment and upload proof</p>
+                          </div>
+
+                          <div className="bg-zinc-900/50 border border-zinc-700 p-6 rounded-lg text-center">
+                            <p className="text-gray-400 text-sm mb-2">Total Amount to Pay</p>
+                            <p className="text-green-400 text-4xl font-black mb-4">₹{totalAmount}</p>
+                            <p className="text-xs text-gray-500">{teamSize} Members × ₹150 each</p>
+                          </div>
+
+                          <div className="bg-white p-6 rounded-lg">
+                            <p className="text-black text-center font-bold mb-4">Scan to Pay</p>
+                            {qrCodeUrl ? (
+                              <img src={qrCodeUrl} alt="Payment QR Code" className="mx-auto max-w-[300px] w-full" />
+                            ) : (
+                              <div className="h-[300px] bg-gray-200 flex items-center justify-center text-gray-500">
+                                QR Code Loading...
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-green-500/70 mb-2 block">UPLOAD PAYMENT SCREENSHOT *</label>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              required
+                              onChange={(e) => setPaymentProof(e.target.files?.[0] || null)}
+                              className="w-full bg-zinc-900 border border-zinc-700 p-3 text-white focus:border-green-500 focus:outline-none transition-all rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-500 file:text-black file:font-bold hover:file:bg-green-400"
+                            />
+                            {paymentProof && (
+                              <p className="text-green-400 text-xs mt-2">✓ {paymentProof.name}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-green-500/70 mb-2 block">TRANSACTION ID / UTR NUMBER (12 DIGITS) *</label>
+                            <input 
+                              type="text" 
+                              required
+                              maxLength={12}
+                              value={utrNumber}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setUtrNumber(val);
+                                setErrors(null);
+                              }}
+                              className="w-full bg-zinc-900 border border-zinc-700 p-3 text-white focus:border-green-500 focus:outline-none transition-all rounded font-mono tracking-wider"
+                              placeholder="123456789012"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Must be exactly 12 digits</p>
+                          </div>
+
+                          {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}
+                          
+                          <div className="flex gap-4 pt-4">
+                            <button type="button" onClick={prevStep}
+                              className="flex-1 bg-zinc-800 text-white font-bold py-4 hover:bg-zinc-700 transition-colors rounded flex items-center justify-center gap-2">
+                              <ArrowLeft size={18} /> BACK
+                            </button>
+                            <button type="submit" disabled={loading}
+                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
+                              {loading ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <CheckCircle size={18}/>
+                            </button>
+                          </div>
+
+                          <p className="text-xs text-gray-500 text-center mt-4">
+                            * Your registration will be verified within 24 hours
+                          </p>
                         </motion.div>
                       )}
                     </AnimatePresence>
