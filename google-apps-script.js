@@ -6,7 +6,7 @@
 /**
  * Required OAuth Scopes - DO NOT REMOVE
  * @param {string} https://www.googleapis.com/auth/spreadsheets - Access spreadsheets
- * @param {string} https://www.googleapis.com/auth/drive.file - Access Drive files
+ * @param {string} https://www.googleapis.com/auth/drive - Access Google Drive (required for folder operations)
  * @param {string} https://www.googleapis.com/auth/script.send_mail - Send emails
  * @param {string} https://www.googleapis.com/auth/script.scriptapp - Manage triggers
  */
@@ -44,7 +44,7 @@
 //   "runtimeVersion": "V8",
 //   "oauthScopes": [
 //     "https://www.googleapis.com/auth/spreadsheets",
-//     "https://www.googleapis.com/auth/drive.file",
+//     "https://www.googleapis.com/auth/drive",
 //     "https://www.googleapis.com/auth/script.send_mail",
 //     "https://www.googleapis.com/auth/script.scriptapp"
 //   ]
