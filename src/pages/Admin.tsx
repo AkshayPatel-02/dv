@@ -70,6 +70,25 @@ export default function Admin() {
     return stored === null ? true : stored === 'true';
   });
   const [toggling, setToggling] = useState(false);
+  
+  // Default QR code state
+  const [defaultQR, setDefaultQR] = useState(() => {
+    const stored = localStorage.getItem('dv_default_qr');
+    return stored || 'QR1';
+  });
+  
+  const qrOptions = [
+    { id: 'QR1', label: 'Payment QR 1' },
+    { id: 'QR2', label: 'Payment QR 2' },
+    { id: 'QR3', label: 'Payment QR 3' },
+    { id: 'QR4', label: 'Payment QR 4' },
+  ];
+  
+  // Update default QR
+  const updateDefaultQR = (qrId: string) => {
+    setDefaultQR(qrId);
+    localStorage.setItem('dv_default_qr', qrId);
+  };
 
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
@@ -485,6 +504,51 @@ export default function Admin() {
             </p>
           </motion.div>
         )}
+        
+        {/* ── QR CODE MANAGEMENT ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6 bg-[#111] border border-zinc-800 rounded-xl p-5"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-mono font-bold text-green-400 flex items-center gap-2">
+                <RefreshCw size={16} /> DEFAULT QR CODE MANAGEMENT
+              </h3>
+              <p className="text-xs font-mono text-gray-500 mt-1">
+                Set which QR code shows by default on registration page
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {qrOptions.map((qr) => (
+              <button
+                key={qr.id}
+                onClick={() => updateDefaultQR(qr.id)}
+                className={`p-4 rounded-lg border-2 transition-all font-mono text-sm font-bold ${
+                  defaultQR === qr.id
+                    ? 'bg-green-500/20 border-green-500 text-green-400'
+                    : 'bg-zinc-900 border-zinc-700 text-gray-400 hover:border-green-500/50'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-lg mb-1">{defaultQR === qr.id ? '✓' : '○'}</div>
+                  <div>{qr.id}</div>
+                  {defaultQR === qr.id && (
+                    <div className="text-[10px] text-green-500 mt-1">DEFAULT</div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-zinc-900/50 border border-zinc-800 rounded text-xs font-mono text-gray-500">
+            💡 <strong className="text-gray-400">Note:</strong> Users can still switch to other QR codes if they encounter issues during payment.
+          </div>
+        </motion.div>
 
         {/* ── QR CODE MANAGEMENT ── */}
         <motion.div

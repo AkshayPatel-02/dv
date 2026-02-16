@@ -168,6 +168,15 @@ export default function Frame2Reality() {
 
   // ── PAYMENT QR CODE (served from public/ folder) ──
   useEffect(() => {
+    // Load default QR from localStorage (set by admin)
+    const defaultQR = localStorage.getItem('dv_default_qr') || 'QR1';
+    const defaultIndex = qrCodes.findIndex(qr => qr.id === defaultQR);
+    if (defaultIndex !== -1 && currentQrIndex === 0) {
+      setCurrentQrIndex(defaultIndex);
+    }
+  }, []);
+  
+  useEffect(() => {
     setQrCodeUrl(qrCodes[currentQrIndex].url);
   }, [currentQrIndex]);
   
@@ -333,13 +342,7 @@ export default function Frame2Reality() {
       return false;
     }
     if (!utrNumber.trim()) {
-      setErrors("ERROR: UTR NUMBER REQUIRED");
-      return false;
-    }
-    
-    const utrRegex = /^\d{12}$/;
-    if (!utrRegex.test(utrNumber.trim())) {
-      setErrors("ERROR: UTR MUST BE 12 DIGITS");
+      setErrors("ERROR: UTR/TRANSACTION ID REQUIRED");
       return false;
     }
     
@@ -1259,21 +1262,19 @@ export default function Frame2Reality() {
                           </div>
 
                           <div>
-                            <label className="text-xs text-green-500/70 mb-2 block">TRANSACTION ID / UTR NUMBER (12 DIGITS) *</label>
+                            <label className="text-xs text-green-500/70 mb-2 block">TRANSACTION ID / UTR NUMBER *</label>
                             <input 
                               type="text" 
                               required
-                              maxLength={12}
                               value={utrNumber}
                               onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, '');
-                                setUtrNumber(val);
+                                setUtrNumber(e.target.value);
                                 setErrors(null);
                               }}
                               className="w-full bg-zinc-900 border border-zinc-700 p-3 text-white focus:border-green-500 focus:outline-none transition-all rounded font-mono tracking-wider"
-                              placeholder="123456789012"
+                              placeholder="Enter payment reference number"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Must be exactly 12 digits</p>
+                            <p className="text-xs text-gray-500 mt-1">Enter the transaction/reference ID from your payment</p>
                           </div>
 
                           {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}
