@@ -568,7 +568,7 @@ export default function Admin() {
               <div key={qrId} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-green-500/30 transition-colors">
                 <div className="bg-white rounded-lg p-3 mb-3">
                   <img 
-                    src={`/payment-qr-${index + 1}.jpg`} 
+                    src={`/payment-qr-${index + 1}.jpeg`} 
                     alt={`Payment ${qrId}`} 
                     className="w-full h-auto rounded"
                     onError={(e) => {
