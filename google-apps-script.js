@@ -81,6 +81,7 @@ const HEADERS = [
   'Member4_Name', 'Member4_Roll', 'Member4_Year', 'Member4_Branch', 'Member4_Section', 'Member4_Phone', 'Member4_Email',
   'Member5_Name', 'Member5_Roll', 'Member5_Year', 'Member5_Branch', 'Member5_Section', 'Member5_Phone', 'Member5_Email',
   'UTRNumber',
+  'PaymentQR',
   'PaymentProofLink',
   'PaymentStatus',
   'EmailStatus',
@@ -139,6 +140,7 @@ function doPost(e) {
       data.Member4_Name || '', data.Member4_Roll || '', data.Member4_Year || '', data.Member4_Branch || '', data.Member4_Section || '', data.Member4_Phone || '', data.Member4_Email || '',
       data.Member5_Name || '', data.Member5_Roll || '', data.Member5_Year || '', data.Member5_Branch || '', data.Member5_Section || '', data.Member5_Phone || '', data.Member5_Email || '',
       data.UTRNumber || '',
+      data.PaymentQR || 'QR1',  // Which QR code was used
       paymentProofLink,
       'Pending',  // Payment Status
       'Not Sent', // Email Status

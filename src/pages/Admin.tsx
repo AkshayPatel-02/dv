@@ -41,7 +41,7 @@ interface TeamRegistration {
 // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
 // This same URL is used in Frame2Reality.tsx for form submission (POST)
 // and here to fetch all registrations (GET)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8mQp0PXEDhMAyfr17rmqgX0xxSPMqXz71nqYKjL1khj-moWPjfwbPcmtjPbGmaZ6N3Q/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzh7r8ZIngezC4L1o_47CFbk47fYMlDS0WBW3zDjENxvPUMauSTfQAAN9OVhJVh9JUnnw/exec';
 
 // Simple admin password — change this to your desired password
 const ADMIN_PASSWORD = 'core@admindv';
@@ -485,6 +485,50 @@ export default function Admin() {
             </p>
           </motion.div>
         )}
+
+        {/* ── QR CODE MANAGEMENT ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 bg-[#111] border border-zinc-800 rounded-xl p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xs font-mono text-green-500 tracking-widest mb-1">PAYMENT QR CODE MANAGEMENT</h3>
+              <p className="text-xs font-mono text-gray-500">Replace any QR code image in the public folder</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {['QR1', 'QR2', 'QR3', 'QR4'].map((qrId, index) => (
+              <div key={qrId} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-green-500/30 transition-colors">
+                <div className="bg-white rounded-lg p-3 mb-3">
+                  <img 
+                    src={`/payment-qr-${index + 1}.jpg`} 
+                    alt={`Payment ${qrId}`} 
+                    className="w-full h-auto rounded"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23ddd" width="200" height="200"/%3E%3Ctext fill="%23999" font-family="monospace" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-green-400">{qrId}</span>
+                  <span className="text-xs font-mono text-gray-500">payment-qr-{index + 1}.jpg</span>
+                </div>
+                <p className="text-xs font-mono text-gray-600 mt-2">
+                  Replace in <code className="bg-zinc-800 px-1 rounded">public/</code> folder
+                </p>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-900/10 border border-blue-500/30 rounded-lg">
+            <p className="text-xs font-mono text-blue-400">
+              💡 <strong>How to update:</strong> Replace the image files (payment-qr-1.jpg, payment-qr-2.jpg, etc.) in the public/ folder and refresh the page.
+            </p>
+          </div>
+        </motion.div>
 
         {/* ── STATS CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

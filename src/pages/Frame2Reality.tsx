@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, useScroll, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Calendar, MapPin, Clock, AlertTriangle, User, Users, Mail, Phone, CheckCircle, Upload, ArrowLeft, Home } from 'lucide-react';
+import { ChevronRight, Calendar, MapPin, Clock, AlertTriangle, User, Users, Mail, Phone, CheckCircle, Upload, ArrowLeft, Home, RefreshCw } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import GamingPortalAnimation from './GamingPortalAnimation';
 
@@ -121,8 +121,17 @@ export default function Frame2Reality() {
   const [teamSize, setTeamSize] = useState(4);
   const [errors, setErrors] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [currentQrIndex, setCurrentQrIndex] = useState(0);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [utrNumber, setUtrNumber] = useState('');
+  
+  // Available QR codes
+  const qrCodes = [
+    { id: 'QR1', url: '/payment-qr-1.jpg', label: 'Payment QR 1' },
+    { id: 'QR2', url: '/payment-qr-2.jpg', label: 'Payment QR 2' },
+    { id: 'QR3', url: '/payment-qr-3.jpg', label: 'Payment QR 3' },
+    { id: 'QR4', url: '/payment-qr-4.jpg', label: 'Payment QR 4' },
+  ];
   
   // Controlled Inputs
   const [formData, setFormData] = useState({
@@ -159,8 +168,13 @@ export default function Frame2Reality() {
 
   // ── PAYMENT QR CODE (served from public/ folder) ──
   useEffect(() => {
-    setQrCodeUrl('/payment-qr.jpg');
-  }, []);
+    setQrCodeUrl(qrCodes[currentQrIndex].url);
+  }, [currentQrIndex]);
+  
+  // Switch to next QR code
+  const switchToNextQr = () => {
+    setCurrentQrIndex((prev) => (prev + 1) % qrCodes.length);
+  };
 
   // ── RESPONSIVE BLOCK SIZE ──
   useEffect(() => {
@@ -350,7 +364,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8mQp0PXEDhMAyfr17rmqgX0xxSPMqXz71nqYKjL1khj-moWPjfwbPcmtjPbGmaZ6N3Q/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzh7r8ZIngezC4L1o_47CFbk47fYMlDS0WBW3zDjENxvPUMauSTfQAAN9OVhJVh9JUnnw/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
@@ -400,6 +414,7 @@ export default function Frame2Reality() {
       });
       payload['PaymentProof'] = base64;
       payload['PaymentProofName'] = paymentProof.name;
+      payload['PaymentQR'] = qrCodes[currentQrIndex].id;
       console.log('[Frame2Reality] Payment proof encoded, size:', Math.round(base64.length / 1024), 'KB');
     } catch (fileErr) {
       console.warn('[Frame2Reality] Could not read payment proof, submitting without it:', fileErr);
@@ -1202,14 +1217,31 @@ export default function Frame2Reality() {
                           </div>
 
                           <div className="bg-white p-6 rounded-lg">
-                            <p className="text-black text-center font-bold mb-4">Scan to Pay</p>
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-black text-center font-bold flex-1">Scan to Pay</p>
+                              <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                {qrCodes[currentQrIndex].id}
+                              </span>
+                            </div>
                             {qrCodeUrl ? (
-                              <img src={qrCodeUrl} alt="Payment QR Code" className="mx-auto max-w-[300px] w-full" />
+                              <img src={qrCodeUrl} alt="Payment QR Code" className="mx-auto max-w-[300px] w-full rounded" />
                             ) : (
-                              <div className="h-[300px] bg-gray-200 flex items-center justify-center text-gray-500">
+                              <div className="h-[300px] bg-gray-200 flex items-center justify-center text-gray-500 rounded">
                                 QR Code Loading...
                               </div>
                             )}
+                            
+                            {/* QR Switch Button */}
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <button
+                                type="button"
+                                onClick={switchToNextQr}
+                                className="w-full text-sm text-gray-600 hover:text-black transition-colors flex items-center justify-center gap-2 py-2"
+                              >
+                                <RefreshCw size={14} />
+                                <span>QR not working? <strong>Try another QR</strong></span>
+                              </button>
+                            </div>
                           </div>
 
                           <div>
