@@ -36,15 +36,25 @@ const Events = () => {
   // 📌 PAST EVENTS
   const pastEvents: Event[] = [
     {
+      title: 'ContribX',
+      date: 'October 24-25, 2025',
+      time: '10:00 AM - 4:20 PM',
+      location: 'Nalanda Auditorium , VBIT',
+      attendees: '250+',
+      description: 'ContribX is a hands-on workshop focusing on Git, GitHub, and Open Source contributions.The two-day event included hands-on training for version control, collaborative development, and a "Fixathon" for debugging real-world projects.',
+      registrationLink: 'https://bit.ly/ContribX-registrationform',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=400&fit=crop'
+    },
+    {
       title: 'DATA.LINK',
       date: 'March 15, 2024',
       time: '9:00 AM - 5:00 PM',
       location: 'Nalanda Auditorium, VBIT',
       attendees: '200+',
-      description: '',
-      image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop',
-      link: '#',
-      registrationLink: '#'
+      description: 'DATA.LINK is a hands-on workshop on Application-Database Connectivity was a resounding success, empowering participants with practical insights into backend integration and real-world system design.',
+      registrationLink: 'https://bit.ly/datalink-registrationform',
+      image: './DATA.LINK.png',
+      link: '#'
     },
     {
       title: 'IGNIS XR-AI: Learn, Hack, Relish – Crafting Tomorrow\'s AI Today!',
