@@ -578,7 +578,7 @@ export default function Admin() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-green-400">{qrId}</span>
-                  <span className="text-xs font-mono text-gray-500">payment-qr-{index + 1}.jpg</span>
+                  <span className="text-xs font-mono text-gray-500">payment-qr-{index + 1}.jpeg</span>
                 </div>
                 <p className="text-xs font-mono text-gray-600 mt-2">
                   Replace in <code className="bg-zinc-800 px-1 rounded">public/</code> folder
@@ -589,7 +589,7 @@ export default function Admin() {
           
           <div className="mt-4 p-3 bg-blue-900/10 border border-blue-500/30 rounded-lg">
             <p className="text-xs font-mono text-blue-400">
-              💡 <strong>How to update:</strong> Replace the image files (payment-qr-1.jpg, payment-qr-2.jpg, etc.) in the public/ folder and refresh the page.
+              💡 <strong>How to update:</strong> Replace the image files (payment-qr-1.jpeg, payment-qr-2.jpeg, etc.) in the public/ folder and refresh the page.
             </p>
           </div>
         </motion.div>

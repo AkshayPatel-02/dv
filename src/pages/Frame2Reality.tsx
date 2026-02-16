@@ -129,8 +129,8 @@ export default function Frame2Reality() {
   const qrCodes = [
     { id: 'QR1', url: '/payment-qr-1.jpeg', label: 'Payment QR 1' },
     { id: 'QR2', url: '/payment-qr-2.jpeg', label: 'Payment QR 2' },
-    { id: 'QR3', url: '/payment-qr-3.jpg', label: 'Payment QR 3' },
-    { id: 'QR4', url: '/payment-qr-4.jpg', label: 'Payment QR 4' },
+    { id: 'QR3', url: '/payment-qr-3.jpeg', label: 'Payment QR 3' },
+    { id: 'QR4', url: '/payment-qr-4.jpeg', label: 'Payment QR 4' },
   ];
   
   // Controlled Inputs

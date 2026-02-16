@@ -27,7 +27,7 @@ const Events = () => {
       location: 'Nalanda Auditorium, VBIT',
       attendees: 'Registration Open',
       description: 'Master Unity 3D and build AR Applications in this intensive 2-Day bootcamp. From wireframes to deployed apps - Level up from Player to Developer.',
-      image: 'https://images.unsplash.com/photo-1614726365723-49cfae968603?q=80&w=2670&auto=format&fit=crop',
+      image: '/Frame2Reality.png',
       link: '/frame2reality',
       registrationLink: '/frame2reality',
     }
