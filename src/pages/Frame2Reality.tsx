@@ -367,7 +367,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzh7r8ZIngezC4L1o_47CFbk47fYMlDS0WBW3zDjENxvPUMauSTfQAAN9OVhJVh9JUnnw/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeOplXQotMMy8vbJTYb1EGdyX4_UW7TGuFaXKGZ3CvLPJZdWj-AHYu406pOwxeqiv85A/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 

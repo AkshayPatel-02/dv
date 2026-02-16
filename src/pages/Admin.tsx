@@ -41,7 +41,7 @@ interface TeamRegistration {
 // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
 // This same URL is used in Frame2Reality.tsx for form submission (POST)
 // and here to fetch all registrations (GET)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzh7r8ZIngezC4L1o_47CFbk47fYMlDS0WBW3zDjENxvPUMauSTfQAAN9OVhJVh9JUnnw/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeOplXQotMMy8vbJTYb1EGdyX4_UW7TGuFaXKGZ3CvLPJZdWj-AHYu406pOwxeqiv85A/exec';
 
 // Simple admin password — change this to your desired password
 const ADMIN_PASSWORD = 'core@admindv';
