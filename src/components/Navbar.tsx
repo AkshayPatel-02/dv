@@ -56,7 +56,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <img src="/logo.png" alt="Data Club Logo" className="h-10 w-10 lg:h-12 lg:w-12" />
-            <span className="font-semibold text-lg lg:text-xl bg-gradient-to-r from-club-teal to-club-orange bg-clip-text text-transparent">
+            <span className="font-semibold text-lg lg:text-xl bg-gradient-to-r from-club-teal-light via-club-green to-club-teal bg-clip-text text-transparent">
               Data Vedhi.Club
             </span>
           </Link>
