@@ -27,6 +27,7 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Frame2Reality from './pages/Frame2Reality';
 import Admin from './pages/Admin';
+import EventGallery from './pages/EventGallery';
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/frame2reality" element={<Frame2Reality />} />
+                  <Route path="/events/gallery/:eventSlug" element={<EventGallery />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>
