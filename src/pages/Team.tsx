@@ -10,7 +10,7 @@ const Team = () => {
       "bio": "",
       "email": "",
       "linkedin": "",
-      "image": "/Team/BHARGAVA_CHARAN.png"
+      "image": "/Team/Bhargava_charan.png"
     },
     {
       "name": "ASHIK",
@@ -85,7 +85,7 @@ const Team = () => {
       "bio": "",
       "email": "",
       "linkedin": "",
-      "image": "/Team/jyothsna.png"
+      "image": "/Team/Jyothsna.png"
     },
      {
       "name": "Hamsika",
@@ -176,12 +176,12 @@ const Team = () => {
       "image": "/Team/Abhinaya.png"
     },
      {
-      "name": "Om Phanendra",
+      "name": "Om Phaneendra",
       "position": "Documentation Team",
       "bio": "",
       "email": "",
       "linkedin": "",
-      "image": "/Team/Om_Phanendra.png"
+      "image": "/Team/Om_Phaneendra.png"
     },
      {
       "name": "Rohith Sri",
