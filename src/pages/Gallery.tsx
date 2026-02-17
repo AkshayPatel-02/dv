@@ -5,11 +5,15 @@ import { X, ZoomIn } from 'lucide-react';
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Use local images from /Gallery/1.png to /Gallery/12.png
-  const galleryImages = Array.from({ length: 25 }, (_, i) => ({
-    src: `/Gallery/${i + 1}.png`,
-    alt: `Gallery Image ${i + 1}`
-  }));
+  // Use local images from /Gallery/1 to /Gallery/36 (.png or .jpg)
+  const galleryImages = Array.from({ length: 36 }, (_, i) => {
+    const num = i + 1;
+    const ext = num >= 22 && num <= 25 ? 'jpg' : 'png';
+    return {
+      src: `/Gallery/${num}.${ext}`,
+      alt: `Gallery Image ${num}`
+    };
+  });
 
   return (
     <div className="min-h-screen">
