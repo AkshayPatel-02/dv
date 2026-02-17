@@ -101,7 +101,7 @@ const Team = () => {
       "bio": "",
       "email": "",
       "linkedin": "",
-      "image": "/Team/Akhil.png"
+      "image": "/Team/V_Akhil.png"
     },
     {
       "name": "Sathwik",
