@@ -307,7 +307,7 @@ const Team = () => {
                 <p className="text-secondary font-medium mb-4">{member.position}</p>
                 <p className="text-muted-foreground leading-relaxed mb-6">{member.bio}</p>
 
-                {/* Social Links */}
+                {/* Social Links   .. */}
                 <div className="flex justify-center space-x-4">
                   <a
                     href={`mailto:${member.email}`}
