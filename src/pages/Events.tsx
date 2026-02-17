@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface Event {
   title: string;
@@ -11,12 +11,16 @@ interface Event {
   attendees: string;
   description: string;
   image: string;
-  link: string;
+  link?: string;
   registrationLink: string;
+  gallerySlug?: string;
 }
 
 const Events = () => {
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(
+    (location.state as any)?.tab === 'past' ? 'past' : 'upcoming'
+  );
 
   // 📌 UPCOMING EVENTS - Frame2Reality with STANDARD styling
   const upcomingEvents: Event[] = [
@@ -43,7 +47,8 @@ const Events = () => {
       attendees: '250+',
       description: 'ContribX is a hands-on workshop focusing on Git, GitHub, and Open Source contributions.The two-day event included hands-on training for version control, collaborative development, and a "Fixathon" for debugging real-world projects.',
       registrationLink: 'https://bit.ly/ContribX-registrationform',
-      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=400&fit=crop',
+      gallerySlug: 'contribx'
     },
     {
       title: 'DATA.LINK',
@@ -65,7 +70,8 @@ const Events = () => {
       description: 'IGNIS XR-AI, a three-day event by DataVedhi.Club offered hands-on training in XR and AI through Unity sessions, real-world applications, and a collaborative hackathon.',
       image: './Ignis.png',
       link: '#',
-      registrationLink: '#'
+      registrationLink: '#',
+      gallerySlug: 'ignis-xr'
     },
     {
       title: 'BI Nexus: A Power BI Odyssey – A Resounding Success!',
@@ -76,7 +82,8 @@ const Events = () => {
       description: 'Datavedhi.club hosted "BI Nexus" on March 4, 2024—a hands-on Power BI workshop that equipped students with key data visualization and analytics skills.',
       image: 'https://images.unsplash.com/photo-1552581234-26160f608093?w=800&h=400&fit=crop',
       link: '#',
-      registrationLink: '#'
+      registrationLink: '#',
+      gallerySlug: 'bi-nexus'
     },
     {
       title: 'TechFiesta 2K23 – A Grand Success!',
@@ -98,7 +105,8 @@ const Events = () => {
       description: 'Vaidushi is a bootcamp that introduces students to R programming and data mining through practical, real-world applications.',
       image: './Vaidushi.png',
       link: '#',
-      registrationLink: '#'
+      registrationLink: '#',
+      gallerySlug: 'vaidhushi'
     }
   ];
 
@@ -228,6 +236,16 @@ const Events = () => {
                               className="btn-academic w-full text-sm md:text-base"
                             >
                               Register Now
+                            </motion.button>
+                          </Link>
+                        ) : event.gallerySlug ? (
+                          <Link to={`/events/gallery/${event.gallerySlug}`} className="w-full block">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
+                            >
+                              View Gallery
                             </motion.button>
                           </Link>
                         ) : (
