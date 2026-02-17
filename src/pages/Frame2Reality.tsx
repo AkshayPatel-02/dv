@@ -366,7 +366,7 @@ export default function Frame2Reality() {
     }
   };
 
-  // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
+  // ⚠️ PASTE YOUR DEuihjPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
   const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqERB9KYW7Q6YDO9_rICzuDPmz8p8FyYpfHRR-UZGT4B_9oa1H1rRTeA72gJ_UAtou/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
