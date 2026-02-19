@@ -65,10 +65,7 @@ export default function Admin() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Registration control state
-  const [registrationOpen, setRegistrationOpen] = useState(() => {
-    const stored = localStorage.getItem('dv_registration_open');
-    return stored === null ? true : stored === 'true';
-  });
+  const [registrationOpen, setRegistrationOpen] = useState(true);
   const [toggling, setToggling] = useState(false);
   
   // Default QR code state
