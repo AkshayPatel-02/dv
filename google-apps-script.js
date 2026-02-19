@@ -138,7 +138,7 @@ function isTeamNameTaken(teamName) {
       return false;
     }
     
-    // Check rows starting from row 2 (skip header)
+    // Check rows starting from row 2   (skip header)
     for (let i = 1; i < data.length; i++) {
       const existingTeamName = data[i][teamNameCol] ? data[i][teamNameCol].toString().trim().toLowerCase() : '';
       if (existingTeamName && existingTeamName === normalizedInput) {
