@@ -162,17 +162,56 @@ function isTeamNameTaken(teamName) {
 // POST — Handle form submissions from Frame2Reality page
 // ─────────────────────────────────────────────────────────────────
 function doPost(e) {
+  // 🔒 ACQUIRE LOCK to prevent race conditions
+  const lock = LockService.getScriptLock();
+  try {
+    // Wait up to 30 seconds for lock
+    lock.waitLock(30000);
+  } catch (lockErr) {
+    Logger.log('❌ Could not acquire lock: ' + lockErr.message);
+    return ContentService
+      .createTextOutput(JSON.stringify({ 
+        status: 'error', 
+        message: 'Server is busy. Please try again in a moment.' 
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
   try {
     const data = JSON.parse(e.postData.contents);
     const sheet = getOrCreateSheet();
     Logger.log('📝 Registration submission received for team: "' + (data.TeamName || 'N/A') + '"');
 
-    // Check if team name already exists (prevent duplicate registrations)
-    if (data.TeamName && data.TeamName.trim() !== '') {
-      Logger.log('🔍 Checking if team name is already taken...');
-      const teamNameTaken = isTeamNameTaken(data.TeamName);
-      if (teamNameTaken) {
-        Logger.log('❌ Registration rejected: Team name already exists');
+    // ═══════════════════════════════════════════════════════════════
+    // COMPREHENSIVE DUPLICATE DETECTION
+    // ═══════════════════════════════════════════════════════════════
+    const sheetData = sheet.getDataRange().getValues();
+    const headers = sheetData[0];
+    
+    // Get column indices
+    const teamNameCol = headers.indexOf('TeamName');
+    const utrCol = headers.indexOf('UTRNumber');
+    const leaderEmailCol = headers.indexOf('LeaderEmail');
+    const leaderPhoneCol = headers.indexOf('LeaderPhone');
+    const timestampCol = headers.indexOf('Timestamp');
+    
+    // Normalize input data for comparison
+    const inputTeamName = (data.TeamName || '').toString().trim().toLowerCase();
+    const inputUTR = (data.UTRNumber || '').toString().trim();
+    const inputEmail = (data.LeaderEmail || '').toString().trim().toLowerCase();
+    const inputPhone = (data.LeaderPhone || '').toString().trim();
+    
+    // Check all existing registrations
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      const existingTeamName = row[teamNameCol] ? row[teamNameCol].toString().trim().toLowerCase() : '';
+      const existingUTR = row[utrCol] ? row[utrCol].toString().trim() : '';
+      const existingEmail = row[leaderEmailCol] ? row[leaderEmailCol].toString().trim().toLowerCase() : '';
+      const existingPhone = row[leaderPhoneCol] ? row[leaderPhoneCol].toString().trim() : '';
+      
+      // Check 1: Team Name duplicate
+      if (inputTeamName && existingTeamName === inputTeamName) {
+        Logger.log('❌ Duplicate detected: Team name "' + data.TeamName + '" already exists (row ' + (i + 1) + ')');
         return ContentService
           .createTextOutput(JSON.stringify({ 
             status: 'error', 
@@ -180,8 +219,85 @@ function doPost(e) {
           }))
           .setMimeType(ContentService.MimeType.JSON);
       }
-      Logger.log('✓ Team name is available, proceeding with registration');
+      
+      // Check 2: UTR Number duplicate (same payment used twice)
+      if (inputUTR && existingUTR === inputUTR && inputUTR !== '') {
+        Logger.log('❌ Duplicate detected: UTR "' + inputUTR + '" already used (row ' + (i + 1) + ')');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'TRANSACTION ID ALREADY USED. This payment has already been registered. If this is an error, contact support.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // Check 3: Exact duplicate submission (same email + phone + team name)
+      if (inputEmail && inputPhone && 
+          existingEmail === inputEmail && 
+          existingPhone === inputPhone && 
+          existingTeamName === inputTeamName) {
+        
+        // Calculate time difference
+        const existingTimestamp = new Date(row[timestampCol]);
+        const timeDiffMinutes = (new Date() - existingTimestamp) / 1000 / 60;
+        
+        // If duplicate within 10 minutes, it's likely accidental resubmission
+        if (timeDiffMinutes < 10) {
+          Logger.log('❌ Duplicate detected: Identical submission within ' + timeDiffMinutes.toFixed(1) + ' minutes (row ' + (i + 1) + ')');
+          return ContentService
+            .createTextOutput(JSON.stringify({ 
+              status: 'error', 
+              message: 'DUPLICATE SUBMISSION DETECTED. Your registration was already received ' + Math.round(timeDiffMinutes) + ' minutes ago. Please check your email for confirmation.' 
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
     }
+    
+    Logger.log('✓ All duplicate checks passed, proceeding with registration');
+
+    // ═══════════════════════════════════════════════════════════════
+    // GENERATE SUBMISSION FINGERPRINT (additional safety layer)
+    // ═══════════════════════════════════════════════════════════════
+    // Create a unique fingerprint from critical data
+    const submissionFingerprint = [
+      inputTeamName,
+      inputEmail,
+      inputPhone,
+      inputUTR,
+      (data.LeaderRoll || '').toString().trim()
+    ].join('|').toLowerCase();
+    
+    // Check if exact same fingerprint exists in recent submissions (last 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - (24 * 60 * 60 * 1000));
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      const rowTimestamp = new Date(row[timestampCol]);
+      
+      // Only check recent submissions
+      if (rowTimestamp < twentyFourHoursAgo) continue;
+      
+      const existingFingerprint = [
+        row[teamNameCol] ? row[teamNameCol].toString().trim().toLowerCase() : '',
+        row[leaderEmailCol] ? row[leaderEmailCol].toString().trim().toLowerCase() : '',
+        row[leaderPhoneCol] ? row[leaderPhoneCol].toString().trim() : '',
+        row[utrCol] ? row[utrCol].toString().trim() : '',
+        row[headers.indexOf('LeaderRoll')] ? row[headers.indexOf('LeaderRoll')].toString().trim() : ''
+      ].join('|').toLowerCase();
+      
+      if (submissionFingerprint === existingFingerprint) {
+        const minutesAgo = Math.round((new Date() - rowTimestamp) / 1000 / 60);
+        Logger.log('❌ EXACT DUPLICATE DETECTED: Identical submission found ' + minutesAgo + ' minutes ago (row ' + (i + 1) + ')');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'DUPLICATE REGISTRATION DETECTED. Your registration was already submitted ' + minutesAgo + ' minute(s) ago. Please check your records or contact support if this is an error.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    Logger.log('✓ Fingerprint check passed - this is a unique submission');
 
     // Save payment proof to Google Drive if present
     let paymentProofLink = '';
@@ -234,6 +350,10 @@ function doPost(e) {
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    // 🔓 ALWAYS RELEASE LOCK
+    lock.releaseLock();
+    Logger.log('🔓 Lock released');
   }
 }
 
