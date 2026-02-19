@@ -118,7 +118,7 @@ export default function Frame2Reality() {
   
   // Form State
   const [formStep, setFormStep] = useState(1);
-  const [teamSize, setTeamSize] = useState(4);
+  const [teamSize, setTeamSize] = useState(3);
   const [errors, setErrors] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [currentQrIndex, setCurrentQrIndex] = useState(0);
@@ -367,7 +367,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEuihjPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqERB9KYW7Q6YDO9_rICzuDPmz8p8FyYpfHRR-UZGT4B_9oa1H1rRTeA72gJ_UAtou/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYu-cB1j3yRmWgJryCOG4Zd9jlBg3K0rRgFSaFTeCWejXcbRUtK8CyicpZumqZRF9C/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
@@ -945,7 +945,7 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 3 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>
@@ -1023,7 +1023,7 @@ export default function Frame2Reality() {
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD SIZE *</label>
                               <div className="flex gap-4">
-                                {[4,5].map(num => (
+                                {[3,4,5].map(num => (
                                   <label key={num} className={`flex-1 border p-3 text-center cursor-pointer transition-all rounded ${teamSize===num?'bg-green-500/20 border-green-500 text-green-400 font-bold':'bg-zinc-900 border-zinc-700 text-gray-500'}`}>
                                     <input type="radio" name="TeamSize" value={num} checked={teamSize===num} onChange={() => setTeamSize(num)} className="hidden"/>
                                     {num} MEMBERS

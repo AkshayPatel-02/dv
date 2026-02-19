@@ -421,7 +421,7 @@ function sendConfirmationEmail(details) {
                 </h3>
                 <ul style="margin: 0; padding-left: 20px; color: #a3a3a3; font-size: 13px; line-height: 1.8;">
                   <li><strong style="color: #ffffff;">Laptops are mandatory</strong> for all participants</li>
-                  <li>Mode of participation: <strong style="color: #ffffff;">Team of 4-5 members</strong></li>
+                  <li>Mode of participation: <strong style="color: #ffffff;">Team of 3-5 members</strong></li>
                   <li><strong style="color: #ffffff;">Minimum 1 Gaming laptop per team is mandatory</strong></li>
                   <li>Please arrive <strong style="color: #ffffff;">15 minutes early</strong> for registration</li>
                   <li>Carry <strong style="color: #ffffff;">valid ID proof</strong> and payment confirmation</li>
