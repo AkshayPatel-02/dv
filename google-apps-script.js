@@ -104,12 +104,84 @@ function getOrCreateSheet() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Helper function to check if team name already exists
+// ─────────────────────────────────────────────────────────────────
+function isTeamNameTaken(teamName) {
+  try {
+    // Safety check: return false if teamName is invalid
+    if (!teamName || teamName === null || teamName === undefined) {
+      Logger.log('⚠️ isTeamNameTaken: teamName is null/undefined');
+      return false;
+    }
+    
+    const sheet = getOrCreateSheet();
+    const data = sheet.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      return false; // No registrations yet
+    }
+    
+    const headers = data[0];
+    const teamNameCol = headers.indexOf('TeamName');
+    
+    if (teamNameCol === -1) {
+      Logger.log('⚠️ isTeamNameTaken: TeamName column not found');
+      return false;
+    }
+    
+    // Normalize team name for comparison (case-insensitive, trim whitespace)
+    const normalizedInput = teamName.toString().trim().toLowerCase();
+    
+    // If normalized input is empty, return false
+    if (!normalizedInput || normalizedInput === '') {
+      Logger.log('⚠️ isTeamNameTaken: normalized team name is empty');
+      return false;
+    }
+    
+    // Check rows starting from row 2 (skip header)
+    for (let i = 1; i < data.length; i++) {
+      const existingTeamName = data[i][teamNameCol] ? data[i][teamNameCol].toString().trim().toLowerCase() : '';
+      if (existingTeamName && existingTeamName === normalizedInput) {
+        Logger.log('✓ Team name "' + teamName + '" already exists (row ' + (i + 1) + ')');
+        return true; // Team name already exists
+      }
+    }
+    
+    Logger.log('✓ Team name "' + teamName + '" is available');
+    return false;
+    
+  } catch (error) {
+    Logger.log('❌ Error in isTeamNameTaken: ' + error.message);
+    Logger.log('Stack trace: ' + error.stack);
+    // Return false on error to not block registrations due to technical issues
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // POST — Handle form submissions from Frame2Reality page
 // ─────────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const sheet = getOrCreateSheet();
+    Logger.log('📝 Registration submission received for team: "' + (data.TeamName || 'N/A') + '"');
+
+    // Check if team name already exists (prevent duplicate registrations)
+    if (data.TeamName && data.TeamName.trim() !== '') {
+      Logger.log('🔍 Checking if team name is already taken...');
+      const teamNameTaken = isTeamNameTaken(data.TeamName);
+      if (teamNameTaken) {
+        Logger.log('❌ Registration rejected: Team name already exists');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'TEAM NAME ALREADY REGISTERED. Please choose a different team name.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      Logger.log('✓ Team name is available, proceeding with registration');
+    }
 
     // Save payment proof to Google Drive if present
     let paymentProofLink = '';
@@ -147,6 +219,7 @@ function doPost(e) {
     ];
 
     sheet.appendRow(row);
+    Logger.log('✅ Registration saved successfully for team: \"' + (data.TeamName || 'N/A') + '\"');
 
     // Email will be sent manually after payment verification
     // Admin will type 'OK' in PaymentStatus column to trigger email
@@ -156,6 +229,8 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log('❌ doPost error: ' + err.message);
+    Logger.log('Stack trace: ' + err.stack);
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -163,10 +238,41 @@ function doPost(e) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// GET — Return all registrations to the Admin page
+// GET — Return all registrations to the Admin page OR check team name
 // ─────────────────────────────────────────────────────────────────
 function doGet(e) {
   try {
+    // Check if this is a team name verification request
+    const params = e.parameter || {};
+    Logger.log('📥 doGet called with action: ' + params.action);
+    
+    // Action: checkTeamName
+    if (params.action === 'checkTeamName') {
+      const teamName = params.teamName;
+      Logger.log('🔍 Checking team name: "' + teamName + '"');
+      
+      // Validate that teamName parameter exists and is not empty
+      if (!teamName || teamName.trim() === '') {
+        Logger.log('⚠️ Team name parameter is empty or missing');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            exists: false,
+            message: 'Team name parameter is required'
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      const isTaken = isTeamNameTaken(teamName);
+      Logger.log('✓ Check result: ' + (isTaken ? 'TAKEN' : 'AVAILABLE'));
+      return ContentService
+        .createTextOutput(JSON.stringify({ 
+          exists: isTaken,
+          message: isTaken ? 'Team name already registered' : 'Team name available'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Default action: Return all registrations for Admin page
     const sheet = getOrCreateSheet();
     const data = sheet.getDataRange().getValues();
     
@@ -193,6 +299,8 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log('❌ doGet error: ' + err.message);
+    Logger.log('Stack trace: ' + err.stack);
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);

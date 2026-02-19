@@ -125,6 +125,11 @@ export default function Frame2Reality() {
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [utrNumber, setUtrNumber] = useState('');
   
+  // Team name validation states
+  const [teamNameChecking, setTeamNameChecking] = useState(false);
+  const [teamNameTaken, setTeamNameTaken] = useState(false);
+  const [teamNameError, setTeamNameError] = useState<string | null>(null);
+  
   // Available QR codes
   const qrCodes = [
     { id: 'QR1', url: '/payment-qr-1.jpeg', label: 'Payment QR 1' },
@@ -208,6 +213,15 @@ export default function Frame2Reality() {
     if (status === 'false') setRegistrationClosed(true);
   }, []);
 
+  // ── CLEANUP DEBOUNCE ON UNMOUNT ──
+  useEffect(() => {
+    return () => {
+      if (checkTeamNameDebounceRef.current) {
+        clearTimeout(checkTeamNameDebounceRef.current);
+      }
+    };
+  }, []);
+
   // ── BOOT ──
   useEffect(() => {
     setTimeout(() => setBootSequence(false), 2800);
@@ -274,11 +288,63 @@ export default function Frame2Reality() {
   }, [mcDoneCount, titlePhase]);
 
   // ─────────────────────────────────────────────────────────────────
+  // CHECK TEAM NAME AVAILABILITY (DEBOUNCED)
+  // ─────────────────────────────────────────────────────────────────
+  const checkTeamNameDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const checkTeamNameAvailability = async (teamName: string) => {
+    if (!teamName || teamName.trim().length < 2) {
+      setTeamNameTaken(false);
+      setTeamNameError(null);
+      return;
+    }
+    
+    setTeamNameChecking(true);
+    setTeamNameError(null);
+    
+    try {
+      const response = await fetch(
+        `${GOOGLE_SCRIPT_URL}?action=checkTeamName&teamName=${encodeURIComponent(teamName.trim())}`,
+        { method: 'GET' }
+      );
+      
+      const result = await response.json();
+      
+      if (result.exists) {
+        setTeamNameTaken(true);
+        setTeamNameError('⚠️ TEAM NAME ALREADY REGISTERED. Please choose a different name.');
+      } else {
+        setTeamNameTaken(false);
+        setTeamNameError(null);
+      }
+    } catch (error) {
+      console.error('[Team Name Check] Error:', error);
+      // Don't block submission on network errors
+      setTeamNameTaken(false);
+      setTeamNameError(null);
+    } finally {
+      setTeamNameChecking(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────
   // FORM VALIDATION
   // ─────────────────────────────────────────────────────────────────
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
     setErrors(null);
+    
+    // Debounced team name check
+    if (name === 'TeamName') {
+      setTeamNameError(null);
+      if (checkTeamNameDebounceRef.current) {
+        clearTimeout(checkTeamNameDebounceRef.current);
+      }
+      checkTeamNameDebounceRef.current = setTimeout(() => {
+        checkTeamNameAvailability(value);
+      }, 800);
+    }
   };
 
   const handleMemberChange = (index: number, field: string, value: string) => {
@@ -294,6 +360,12 @@ export default function Frame2Reality() {
     
     if (!TeamName || !LeaderName || !LeaderRoll || !LeaderYear || !LeaderBranch || !LeaderSection || !LeaderPhone || !LeaderEmail) {
         setErrors("ERROR: ALL FIELDS ARE MANDATORY");
+        return false;
+    }
+    
+    // Check if team name is already taken
+    if (teamNameTaken) {
+        setErrors("ERROR: TEAM NAME ALREADY REGISTERED");
         return false;
     }
 
@@ -366,13 +438,19 @@ export default function Frame2Reality() {
     }
   };
 
-  // ⚠️ PASTE YOUR DEuihjPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYu-cB1j3yRmWgJryCOG4Zd9jlBg3K0rRgFSaFTeCWejXcbRUtK8CyicpZumqZRF9C/exec';
+  // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMEoyZiG2Lxd7IFwntZ01hDNAhVMrlxxZBZ02CDbufw7_qP2kO1_4VcHEdd5mYD51A/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
   
   if (!validateStep3()) return;
+  
+  // Final check: Prevent submission if team name is taken
+  if (teamNameTaken) {
+    setErrors('ERROR: TEAM NAME ALREADY REGISTERED. Please go back and choose a different name.');
+    return;
+  }
 
   setLoading(true);
   setErrors(null);
@@ -1016,9 +1094,45 @@ export default function Frame2Reality() {
                           <div className="grid md:grid-cols-2 gap-6">
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD NAME *</label>
-                              <input required name="TeamName" value={formData.TeamName} onChange={handleInputChange}
-                                className="w-full bg-zinc-900 border border-zinc-700 p-3 text-white focus:border-green-500 focus:outline-none transition-all placeholder-zinc-600 rounded"
-                                placeholder="Ex: CyberPunks" />
+                              <div className="relative">
+                                <input 
+                                  required 
+                                  name="TeamName" 
+                                  value={formData.TeamName} 
+                                  onChange={handleInputChange}
+                                  className={`w-full bg-zinc-900 border p-3 text-white focus:outline-none transition-all placeholder-zinc-600 rounded ${
+                                    teamNameTaken 
+                                      ? 'border-red-500 focus:border-red-500' 
+                                      : teamNameChecking 
+                                      ? 'border-yellow-500 focus:border-yellow-500' 
+                                      : formData.TeamName && !teamNameTaken 
+                                      ? 'border-green-500 focus:border-green-500'
+                                      : 'border-zinc-700 focus:border-green-500'
+                                  }`}
+                                  placeholder="Ex: CyberPunks" 
+                                />
+                                {teamNameChecking && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <RefreshCw className="w-4 h-4 text-yellow-500 animate-spin" />
+                                  </div>
+                                )}
+                                {!teamNameChecking && formData.TeamName && !teamNameTaken && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </div>
+                                )}
+                                {!teamNameChecking && teamNameTaken && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                  </div>
+                                )}
+                              </div>
+                              {teamNameError && (
+                                <p className="text-xs text-red-500 mt-1 font-bold animate-pulse">{teamNameError}</p>
+                              )}
+                              {!teamNameChecking && formData.TeamName && !teamNameTaken && formData.TeamName.length >= 2 && (
+                                <p className="text-xs text-green-500 mt-1">✓ Team name available</p>
+                              )}
                             </div>
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD SIZE *</label>
@@ -1097,9 +1211,12 @@ export default function Frame2Reality() {
                             </div>
                           </div>
                           {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}
-                          <button type="button" onClick={nextStep}
-                            className="w-full bg-white text-black font-bold py-4 flex items-center justify-center gap-2 hover:bg-green-400 transition-colors rounded">
-                            NEXT: ADD SQUAD MEMBERS <ChevronRight size={18}/>
+                          <button 
+                            type="button" 
+                            onClick={nextStep}
+                            disabled={teamNameTaken || teamNameChecking}
+                            className="w-full bg-white text-black font-bold py-4 flex items-center justify-center gap-2 hover:bg-green-400 transition-colors rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
+                            {teamNameChecking ? 'CHECKING TEAM NAME...' : 'NEXT: ADD SQUAD MEMBERS'} <ChevronRight size={18}/>
                           </button>
                         </motion.div>
                       )}
