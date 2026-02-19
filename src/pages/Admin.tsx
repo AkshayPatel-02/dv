@@ -213,19 +213,10 @@ export default function Admin() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
   }, [registrations]);
 
-  // Auto-close registrations when limit exceeded
-  useEffect(() => {
-    if (totalParticipants >= REGISTRATION_LIMIT && registrationOpen) {
-      setRegistrationOpen(false);
-      localStorage.setItem('dv_registration_open', 'false');
-    }
-  }, [totalParticipants, registrationOpen]);
+  // NOTE: Auto-close removed — admin has full manual control over registration status
 
   // ── TOGGLE REGISTRATION ──
   const toggleRegistration = () => {
-    if (totalParticipants >= REGISTRATION_LIMIT && !registrationOpen) {
-      return;
-    }
     setToggling(true);
     const newState = !registrationOpen;
     setRegistrationOpen(newState);
@@ -486,7 +477,7 @@ export default function Admin() {
 
           <button
             onClick={toggleRegistration}
-            disabled={toggling || (totalParticipants >= REGISTRATION_LIMIT && !registrationOpen)}
+            disabled={toggling}
             className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-mono font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               registrationOpen
                 ? 'bg-red-600 hover:bg-red-500 text-white'
@@ -501,7 +492,7 @@ export default function Admin() {
           </button>
         </motion.div>
 
-        {/* Limit exceeded auto-close warning */}
+        {/* Limit warning (informational only — admin can still toggle) */}
         {totalParticipants >= REGISTRATION_LIMIT && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -510,7 +501,7 @@ export default function Admin() {
           >
             <AlertTriangle className="text-yellow-500 flex-shrink-0" size={18} />
             <p className="text-xs font-mono text-yellow-400">
-              PARTICIPANT LIMIT OF {REGISTRATION_LIMIT} HAS BEEN REACHED. REGISTRATIONS HAVE BEEN AUTOMATICALLY CLOSED. MANUAL OVERRIDE IS DISABLED.
+              PARTICIPANT LIMIT OF {REGISTRATION_LIMIT} HAS BEEN REACHED. You can still manually open/close registrations.
             </p>
           </motion.div>
         )}
