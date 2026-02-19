@@ -114,7 +114,7 @@ export default function Frame2Reality() {
   const [showPortalAnimation, setShowPortalAnimation] = useState(true);
   
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [registrationClosed] = useState(false);
   
   // Form State
   const [formStep, setFormStep] = useState(1);
@@ -207,11 +207,8 @@ export default function Frame2Reality() {
     return () => window.removeEventListener('resize', calc);
   }, []);
 
-  // ── CHECK REGISTRATION STATUS ──
-  useEffect(() => {
-    const status = localStorage.getItem('dv_registration_open');
-    if (status === 'false') setRegistrationClosed(true);
-  }, []);
+  // ── REGISTRATION STATUS ── (admin-controlled, always open unless manually set)
+  // Removed localStorage check — registration is always open by default
 
   // ── CLEANUP DEBOUNCE ON UNMOUNT ──
   useEffect(() => {
