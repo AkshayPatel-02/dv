@@ -41,7 +41,7 @@ interface TeamRegistration {
 // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
 // This same URL is used in Frame2Reality.tsx for form submission (POST)
 // and here to fetch all registrations (GET)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMEoyZiG2Lxd7IFwntZ01hDNAhVMrlxxZBZ02CDbufw7_qP2kO1_4VcHEdd5mYD51A/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdIO9eQ3G5gPz3aVbEXHbV8dJN7zneqYgcKNSN_tKH5L0tNgqJGT5zwN4fE1nubfi7/exec';
 
 // Simple admin password — change this to your desired password
 const ADMIN_PASSWORD = 'core@admindv';
@@ -65,10 +65,7 @@ export default function Admin() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Registration control state
-  const [registrationOpen, setRegistrationOpen] = useState(() => {
-    const stored = localStorage.getItem('dv_registration_open');
-    return stored === null ? true : stored === 'true';
-  });
+  const [registrationOpen, setRegistrationOpen] = useState(true);
   const [toggling, setToggling] = useState(false);
   
   // Default QR code state
@@ -137,9 +134,19 @@ export default function Admin() {
           const roll = row[`Member${i}_Roll`];
           if (name && roll) members.push({ name, roll });
         }
+        // Handle corrupted TeamSize data (some rows have team name instead of number)
+        let parsedSize = parseInt(row.TeamSize || '0', 10);
+        if (isNaN(parsedSize) || parsedSize < 1 || parsedSize > 5) {
+          // Derive from TotalAmount (₹150 per person)
+          const amount = parseInt(row.TotalAmount || '0', 10);
+          parsedSize = amount > 0 ? Math.round(amount / 150) : 4;
+          // Clamp to valid range
+          if (parsedSize < 3) parsedSize = 3;
+          if (parsedSize > 5) parsedSize = 5;
+        }
         return {
           TeamName: row.TeamName || '',
-          TeamSize: parseInt(row.TeamSize || '4', 10),
+          TeamSize: parsedSize,
           LeaderName: row.LeaderName || '',
           LeaderRoll: row.LeaderRoll || '',
           LeaderYear: row.LeaderYear || '',
@@ -203,19 +210,10 @@ export default function Admin() {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
   }, [registrations]);
 
-  // Auto-close registrations when limit exceeded
-  useEffect(() => {
-    if (totalParticipants >= REGISTRATION_LIMIT && registrationOpen) {
-      setRegistrationOpen(false);
-      localStorage.setItem('dv_registration_open', 'false');
-    }
-  }, [totalParticipants, registrationOpen]);
+  // NOTE: Auto-close removed — admin has full manual control over registration status
 
   // ── TOGGLE REGISTRATION ──
   const toggleRegistration = () => {
-    if (totalParticipants >= REGISTRATION_LIMIT && !registrationOpen) {
-      return;
-    }
     setToggling(true);
     const newState = !registrationOpen;
     setRegistrationOpen(newState);
@@ -476,7 +474,7 @@ export default function Admin() {
 
           <button
             onClick={toggleRegistration}
-            disabled={toggling || (totalParticipants >= REGISTRATION_LIMIT && !registrationOpen)}
+            disabled={toggling}
             className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-mono font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               registrationOpen
                 ? 'bg-red-600 hover:bg-red-500 text-white'
@@ -491,7 +489,7 @@ export default function Admin() {
           </button>
         </motion.div>
 
-        {/* Limit exceeded auto-close warning */}
+        {/* Limit warning (informational only — admin can still toggle) */}
         {totalParticipants >= REGISTRATION_LIMIT && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -500,7 +498,7 @@ export default function Admin() {
           >
             <AlertTriangle className="text-yellow-500 flex-shrink-0" size={18} />
             <p className="text-xs font-mono text-yellow-400">
-              PARTICIPANT LIMIT OF {REGISTRATION_LIMIT} HAS BEEN REACHED. REGISTRATIONS HAVE BEEN AUTOMATICALLY CLOSED. MANUAL OVERRIDE IS DISABLED.
+              PARTICIPANT LIMIT OF {REGISTRATION_LIMIT} HAS BEEN REACHED. You can still manually open/close registrations.
             </p>
           </motion.div>
         )}

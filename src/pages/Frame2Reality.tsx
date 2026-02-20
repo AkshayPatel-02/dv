@@ -114,7 +114,7 @@ export default function Frame2Reality() {
   const [showPortalAnimation, setShowPortalAnimation] = useState(true);
   
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [registrationClosed] = useState(false);
   
   // Form State
   const [formStep, setFormStep] = useState(1);
@@ -211,11 +211,8 @@ export default function Frame2Reality() {
     return () => window.removeEventListener('resize', calc);
   }, []);
 
-  // ── CHECK REGISTRATION STATUS ──
-  useEffect(() => {
-    const status = localStorage.getItem('dv_registration_open');
-    if (status === 'false') setRegistrationClosed(true);
-  }, []);
+  // ── REGISTRATION STATUS ── (admin-controlled, always open unless manually set)
+  // Removed localStorage check — registration is always open by default
 
   // ── CLEANUP DEBOUNCE ON UNMOUNT ──
   useEffect(() => {
@@ -472,7 +469,7 @@ export default function Frame2Reality() {
   };
 
   // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMEoyZiG2Lxd7IFwntZ01hDNAhVMrlxxZBZ02CDbufw7_qP2kO1_4VcHEdd5mYD51A/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdIO9eQ3G5gPz3aVbEXHbV8dJN7zneqYgcKNSN_tKH5L0tNgqJGT5zwN4fE1nubfi7/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
