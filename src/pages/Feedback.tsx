@@ -35,7 +35,7 @@ const feedbackSchema = z.object({
   ),
   section: z.enum(['A', 'B', 'C', 'D', 'E', 'F'], { required_error: 'Select section' }),
   overallRating: z.number().min(1, 'Rating required').max(5),
-  engagementRating: z.number().min(1, 'Rating required').max(5),
+  engagementRating: z.string().min(1, 'Response required'),
   workshopEnhancement: z.string().optional().default(''),
   understandingRating: z.number().min(1, 'Rating required').max(5),
   suggestions: z.string().optional().default(''),
@@ -142,13 +142,13 @@ export default function Feedback() {
     formState: { errors },
   } = useForm<FeedbackForm>({
     resolver: zodResolver(feedbackSchema),
-    defaultValues: { workshopEnhancement: '', suggestions: '' },
+    defaultValues: { workshopEnhancement: '', suggestions: '', engagementRating: '' },
   });
 
   const formSteps = [
     { title: 'OPERATIVE_DATA', icon: Shield, border: 'border-green-500/60', glow: 'shadow-[0_0_25px_rgba(34,197,94,0.25)]', active: 'border-green-500', iconColor: 'text-green-500', btnBg: 'bg-green-500 hover:bg-green-400' },
-    { title: 'MISSION_RATING', icon: Target, border: 'border-cyan-500/60', glow: 'shadow-[0_0_25px_rgba(6,182,212,0.25)]', active: 'border-cyan-500', iconColor: 'text-cyan-400', btnBg: 'bg-cyan-500 hover:bg-cyan-400' },
-    { title: 'INTEL_REPORT', icon: Zap, border: 'border-yellow-500/60', glow: 'shadow-[0_0_25px_rgba(234,179,8,0.25)]', active: 'border-yellow-500', iconColor: 'text-yellow-400', btnBg: 'bg-yellow-500 hover:bg-yellow-400' },
+    { title: 'MISSION_RATING', icon: Target, border: 'border-green-500/60', glow: 'shadow-[0_0_25px_rgba(34,197,94,0.25)]', active: 'border-green-500', iconColor: 'text-green-500', btnBg: 'bg-green-500 hover:bg-green-400' },
+    { title: 'INTEL_REPORT', icon: Zap, border: 'border-green-500/60', glow: 'shadow-[0_0_25px_rgba(34,197,94,0.25)]', active: 'border-green-500', iconColor: 'text-green-500', btnBg: 'bg-green-500 hover:bg-green-400' },
   ];
 
   const step = formSteps[currentStep];
@@ -161,12 +161,12 @@ export default function Feedback() {
   // ── Step navigation with mandatory validation ──
   const goToStep1 = async () => {
     const valid = await trigger(['name', 'rollNo', 'year', 'branch', 'section']);
-    if (valid) setCurrentStep(1);
+    if (valid) { setCurrentStep(1); window.scrollTo(0, 0); }
   };
 
   const goToStep2 = async () => {
     const valid = await trigger(['overallRating', 'engagementRating']);
-    if (valid) setCurrentStep(2);
+    if (valid) { setCurrentStep(2); window.scrollTo(0, 0); }
   };
 
   const onSubmit = async (data: FeedbackForm) => {
@@ -486,6 +486,8 @@ export default function Feedback() {
         <FloatingParticles />
 
         <FeedbackCarAnimation />
+        {/* Spacer for fixed animation */}
+        <div style={{ height: '190px' }} />
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 max-w-3xl">
 
@@ -581,8 +583,8 @@ export default function Feedback() {
                       &gt; OPERATIVE_IDENTIFICATION
                     </h2>
                     <div className="mb-5">
-                      <Label className="text-green-500 text-xs mb-2 block tracking-wider">
-                        FULL_NAME <span className="text-red-500">*</span>
+                      <Label className="text-green-500 text-base mb-2 block tracking-wider">
+                        Full Name <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         {...register('name')}
@@ -592,8 +594,8 @@ export default function Feedback() {
                       {errors.name && <p className="text-red-500 text-xs mt-1 animate-pulse">&gt; {errors.name.message}</p>}
                     </div>
                     <div className="mb-5">
-                      <Label className="text-green-500 text-xs mb-2 block tracking-wider">
-                        ROLL_NUMBER <span className="text-red-500">*</span>
+                      <Label className="text-green-500 text-base mb-2 block tracking-wider">
+                        Roll Number <span className="text-red-500">*</span>
                       </Label>
                       <Input
                         {...register('rollNo')}
@@ -605,8 +607,8 @@ export default function Feedback() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {/* YEAR */}
                       <div>
-                        <Label className="text-green-500 text-xs mb-2 block tracking-wider">
-                          YEAR <span className="text-red-500">*</span>
+                        <Label className="text-green-500 text-base mb-2 block tracking-wider">
+                          Year <span className="text-red-500">*</span>
                         </Label>
                         <RadioGroup onValueChange={(v) => setValue('year', v as 'II' | 'III', { shouldValidate: true })} className="flex gap-3">
                           {['II', 'III'].map((y) => (
@@ -620,8 +622,8 @@ export default function Feedback() {
                       </div>
                       {/* BRANCH */}
                       <div>
-                        <Label className="text-green-500 text-xs mb-2 block tracking-wider">
-                          BRANCH <span className="text-red-500">*</span>
+                        <Label className="text-green-500 text-base mb-2 block tracking-wider">
+                          Branch <span className="text-red-500">*</span>
                         </Label>
                         <select
                           {...register('branch')}
@@ -637,8 +639,8 @@ export default function Feedback() {
                       </div>
                       {/* SECTION — now a dropdown */}
                       <div>
-                        <Label className="text-green-500 text-xs mb-2 block tracking-wider">
-                          SECTION <span className="text-red-500">*</span>
+                        <Label className="text-green-500 text-base mb-2 block tracking-wider">
+                          Section <span className="text-red-500">*</span>
                         </Label>
                         <select
                           {...register('section')}
@@ -677,43 +679,40 @@ export default function Feedback() {
                   className="space-y-5"
                 >
                   <div className={`bg-black border-2 ${step.border} ${step.glow} p-5 sm:p-8 rounded-sm`}>
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-cyan-400 mb-8 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-green-500 mb-8 flex items-center gap-2">
                       <Target size={22} />
                       &gt; MISSION_PERFORMANCE
                     </h2>
                     <div className="mb-10 text-center">
-                      <Label className="text-cyan-300 text-xs sm:text-sm mb-2 block tracking-wider">
-                        OVERALL_EXPERIENCE_RATING <span className="text-red-500">*</span>
+                      <Label className="text-green-500 text-sm sm:text-lg mb-2 block tracking-wider" style={{ overflowWrap: 'anywhere' }}>
+                        How would you rate your overall experience in Frame2Reality event <span className="text-red-500">*</span>
                       </Label>
                       <StarRating
                         name="overallRating"
                         value={watch('overallRating') || 0}
-                        accentClass="fill-cyan-400 text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,1)]"
-                        glowColor="rgba(6,182,212,0.5)"
                       />
                       {errors.overallRating && <p className="text-red-500 text-xs mt-2 text-center animate-pulse">&gt; RATING_REQUIRED</p>}
                     </div>
-                    <div className="text-center">
-                      <Label className="text-cyan-300 text-xs sm:text-sm mb-2 block tracking-wider">
-                        SESSION_ENGAGEMENT_LEVEL <span className="text-red-500">*</span>
+                    <div className="mt-6">
+                      <Label className="text-green-500 text-sm sm:text-lg mb-2 block tracking-wider" style={{ overflowWrap: 'anywhere' }}>
+                        Was the session engaging and interactive <span className="text-red-500">*</span>
                       </Label>
-                      <StarRating
-                        name="engagementRating"
-                        value={watch('engagementRating') || 0}
-                        accentClass="fill-cyan-400 text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,1)]"
-                        glowColor="rgba(6,182,212,0.5)"
+                      <Textarea
+                        {...register('engagementRating')}
+                        className="bg-black border-green-500/40 text-green-400 placeholder:text-gray-700 focus:border-green-500 min-h-[90px] font-mono text-sm focus:shadow-[0_0_10px_rgba(34,197,94,0.25)] resize-none mt-2"
+                        placeholder="Was the session engaging and interactive? Share your thoughts..."
                       />
-                      {errors.engagementRating && <p className="text-red-500 text-xs mt-2 text-center animate-pulse">&gt; RATING_REQUIRED</p>}
+                      {errors.engagementRating && <p className="text-red-500 text-xs mt-2 animate-pulse">&gt; RESPONSE_REQUIRED</p>}
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <Button type="button" onClick={() => setCurrentStep(0)}
+                    <Button type="button" onClick={() => { setCurrentStep(0); window.scrollTo(0, 0); }}
                       className="flex-1 h-12 bg-black border-2 border-green-500/40 text-green-500 hover:bg-green-500/10 font-bold">
                       &lt; BACK
                     </Button>
                     <motion.div className="flex-1" whileTap={{ scale: 0.99 }}>
                       <Button type="button" onClick={goToStep2}
-                        className="w-full h-12 bg-cyan-500 hover:bg-cyan-400 text-black font-bold shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                        className="w-full h-12 bg-green-500 hover:bg-green-400 text-black font-bold shadow-[0_0_15px_rgba(34,197,94,0.4)]">
                         PROCEED &gt;
                       </Button>
                     </motion.div>
@@ -732,55 +731,53 @@ export default function Feedback() {
                   className="space-y-5"
                 >
                   <div className={`bg-black border-2 ${step.border} ${step.glow} p-5 sm:p-8 rounded-sm`}>
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-yellow-400 mb-6 flex items-center gap-2">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-green-500 mb-6 flex items-center gap-2">
                       <Zap size={22} />
                       &gt; INTEL_TRANSMISSION
                     </h2>
                     <div className="mb-6">
-                      <Label className="text-yellow-400 text-xs mb-2 block tracking-wider">
-                        WORKSHOP_ENHANCEMENT_REPORT
-                        <span className="text-gray-500 ml-2 normal-case tracking-normal text-[10px]">(optional)</span>
+                      <Label className="text-green-500 text-sm sm:text-lg mb-2 block tracking-wider" style={{ overflowWrap: 'anywhere' }}>
+                        Did the workshop enhance your Unity 3D and AR understanding
+                        <span className="text-gray-500 ml-2 normal-case tracking-normal text-xs">(optional)</span>
                       </Label>
                       <Textarea
                         {...register('workshopEnhancement')}
-                        className="bg-black border-yellow-500/40 text-yellow-300 placeholder:text-gray-700 focus:border-yellow-500 min-h-[90px] font-mono text-sm focus:shadow-[0_0_10px_rgba(234,179,8,0.25)] resize-none"
+                        className="bg-black border-green-500/40 text-green-400 placeholder:text-gray-700 focus:border-green-500 min-h-[90px] font-mono text-sm focus:shadow-[0_0_10px_rgba(34,197,94,0.25)] resize-none"
                         placeholder="Did the workshop enhance your Unity 3D & AR understanding?"
                       />
                     </div>
                     <div className="mb-6 text-center">
-                      <Label className="text-yellow-300 text-xs sm:text-sm mb-2 block tracking-wider">
-                        CONCEPT_UNDERSTANDING_LEVEL <span className="text-red-500">*</span>
+                      <Label className="text-green-500 text-sm sm:text-lg mb-2 block tracking-wider" style={{ overflowWrap: 'anywhere' }}>
+                        Concept Understanding Level <span className="text-red-500">*</span>
                       </Label>
                       <StarRating
                         name="understandingRating"
                         value={watch('understandingRating') || 0}
-                        accentClass="fill-yellow-400 text-yellow-400 drop-shadow-[0_0_12px_rgba(234,179,8,1)]"
-                        glowColor="rgba(234,179,8,0.5)"
                       />
                       {errors.understandingRating && <p className="text-red-500 text-xs mt-2 text-center animate-pulse">&gt; RATING_REQUIRED</p>}
                     </div>
                     <div>
-                      <Label className="text-yellow-400 text-xs mb-2 block tracking-wider">
-                        SYSTEM_ENHANCEMENT_SUGGESTIONS
-                        <span className="text-gray-500 ml-2 normal-case tracking-normal text-[10px]">(optional)</span>
+                      <Label className="text-green-500 text-sm sm:text-lg mb-2 block tracking-wider" style={{ overflowWrap: 'anywhere' }}>
+                        Do you have suggestions to enhance DataVedhi club activities
+                        <span className="text-gray-500 ml-2 normal-case tracking-normal text-xs">(optional)</span>
                       </Label>
                       <Textarea
                         {...register('suggestions')}
-                        className="bg-black border-yellow-500/40 text-yellow-300 placeholder:text-gray-700 focus:border-yellow-500 min-h-[90px] font-mono text-sm focus:shadow-[0_0_10px_rgba(234,179,8,0.25)] resize-none"
+                        className="bg-black border-green-500/40 text-green-400 placeholder:text-gray-700 focus:border-green-500 min-h-[90px] font-mono text-sm focus:shadow-[0_0_10px_rgba(34,197,94,0.25)] resize-none"
                         placeholder="Suggestions to enhance DataVedhi club activities..."
                       />
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <Button type="button" onClick={() => setCurrentStep(1)}
-                      className="flex-1 h-12 bg-black border-2 border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 font-bold">
+                    <Button type="button" onClick={() => { setCurrentStep(1); window.scrollTo(0, 0); }}
+                      className="flex-1 h-12 bg-black border-2 border-green-500/40 text-green-500 hover:bg-green-500/10 font-bold">
                       &lt; BACK
                     </Button>
                     <motion.div className="flex-[2]" whileTap={{ scale: 0.99 }}>
                       <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full h-12 bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-[0_0_15px_rgba(234,179,8,0.4)] flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+                        className="w-full h-12 bg-green-500 hover:bg-green-400 text-black font-bold shadow-[0_0_15px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2 transition-all disabled:opacity-60"
                       >
                         <Send className="h-4 w-4" />
                         TRANSMIT_DATA
