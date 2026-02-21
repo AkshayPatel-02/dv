@@ -130,6 +130,10 @@ export default function Frame2Reality() {
   const [teamNameTaken, setTeamNameTaken] = useState(false);
   const [teamNameError, setTeamNameError] = useState<string | null>(null);
   
+  // Submission control - prevent double submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittedRef = useRef(false);
+  
   // Available QR codes
   const qrCodes = [
     { id: 'QR1', url: '/payment-qr-1.jpeg', label: 'Payment QR 1' },
@@ -222,6 +226,35 @@ export default function Frame2Reality() {
   // ── BOOT ──
   useEffect(() => {
     setTimeout(() => setBootSequence(false), 2800);
+  }, []);
+  
+  // ── CHECK IF RECENTLY SUBMITTED (localStorage persistence) ──
+  useEffect(() => {
+    const checkRecentSubmission = () => {
+      try {
+        const lastSubmission = localStorage.getItem('f2r_last_submission');
+        if (lastSubmission) {
+          const submissionData = JSON.parse(lastSubmission);
+          const submittedAt = new Date(submissionData.timestamp);
+          const now = new Date();
+          const minutesAgo = (now.getTime() - submittedAt.getTime()) / 1000 / 60;
+          
+          // If submitted within last 15 minutes, block resubmission
+          if (minutesAgo < 15) {
+            submittedRef.current = true;
+            setIsSubmitting(true);
+            console.log('[Frame2Reality] Recent submission detected ' + Math.round(minutesAgo) + ' minutes ago. Blocking resubmission.');
+          } else {
+            // Clear old submission data
+            localStorage.removeItem('f2r_last_submission');
+          }
+        }
+      } catch (err) {
+        console.error('[Frame2Reality] Error checking recent submission:', err);
+      }
+    };
+    
+    checkRecentSubmission();
   }, []);
 
   // ── START ANIMATION ──
@@ -441,6 +474,13 @@ export default function Frame2Reality() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
   
+  // 🚫 Prevent double submission
+  if (isSubmitting || submittedRef.current) {
+    console.warn('[Frame2Reality] Submission already in progress or recently completed');
+    setErrors('SUBMISSION BLOCKED: You have already submitted your registration. Please check your email for confirmation.');
+    return;
+  }
+  
   if (!validateStep3()) return;
   
   // Final check: Prevent submission if team name is taken
@@ -449,6 +489,9 @@ export default function Frame2Reality() {
     return;
   }
 
+  // 🔒 Mark as submitting immediately
+  setIsSubmitting(true);
+  submittedRef.current = true;
   setLoading(true);
   setErrors(null);
 
@@ -526,8 +569,23 @@ export default function Frame2Reality() {
 
     if (result?.status === 'error') {
       setErrors(`SERVER ERROR: ${result.message || 'Unknown error'}`);
+      // Reset submission flags on error so user can try again
+      setIsSubmitting(false);
+      submittedRef.current = false;
     } else {
-      // ✅ SUCCESS - Show modal, then close it and scroll to top
+      // ✅ SUCCESS - Save to localStorage to prevent resubmission after refresh
+      try {
+        localStorage.setItem('f2r_last_submission', JSON.stringify({
+          teamName: payload.TeamName,
+          timestamp: new Date().toISOString(),
+          email: payload.LeaderEmail
+        }));
+        console.log('[Frame2Reality] Submission saved to localStorage');
+      } catch (err) {
+        console.error('[Frame2Reality] Could not save to localStorage:', err);
+      }
+      
+      // Show modal, then close it and scroll to top
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
@@ -535,32 +593,15 @@ export default function Frame2Reality() {
       }, 4000);
     }
   } catch (err: unknown) {
+      setIsSubmitting(false);
+      submittedRef.current = false;
+      
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.error('[Frame2Reality] Request timed out after 60 s');
         setErrors('REQUEST TIMED OUT. Please check your connection and try again.');
-      } else if (err instanceof TypeError && String(err).includes('Failed to fetch')) {
-        console.warn('[Frame2Reality] CORS blocked, retrying with no-cors…');
-        try {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-          });
-          console.log('[Frame2Reality] no-cors fallback completed.');
-          // ✅ SUCCESS - Show modal, then close it and scroll to top
-          setShowSuccessModal(true);
-          setTimeout(() => {
-            setShowSuccessModal(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 4000);
-        } catch (fallbackErr) {
-          console.error('[Frame2Reality] Fallback also failed:', fallbackErr);
-          setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
-        }
       } else {
         console.error('[Frame2Reality] Submission error:', err);
-        setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER');
+        setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
       }
   } finally { 
       setLoading(false); 
@@ -1398,9 +1439,11 @@ export default function Frame2Reality() {
                               className="flex-1 bg-zinc-800 text-white font-bold py-4 hover:bg-zinc-700 transition-colors rounded flex items-center justify-center gap-2">
                               <ArrowLeft size={18} /> BACK
                             </button>
-                            <button type="submit" disabled={loading}
-                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
-                              {loading ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <CheckCircle size={18}/>
+                            <button 
+                              type="submit" 
+                              disabled={loading || isSubmitting || submittedRef.current}
+                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600">
+                              {loading || isSubmitting ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <CheckCircle size={18}/>
                             </button>
                           </div>
 
