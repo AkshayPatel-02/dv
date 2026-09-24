@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Layout from "./components/Layout";
+import Feedback from './pages/Feedback';
+import FeedbackAdmin from './pages/FeedbackAdmin';
 
 // Scroll to top on every route change
 function ScrollToTop() {
@@ -61,6 +63,8 @@ const App = () => (
                   <Route path="/frame2reality" element={<Frame2Reality />} />
                   <Route path="/events/gallery/:eventSlug" element={<EventGallery />} />
                   <Route path="*" element={<NotFound />} />
+                  <Route path="/feedback" element={<Feedback />} />
+                  <Route path="/feedback-admin" element={<FeedbackAdmin />} />
                 </Routes>
               </Layout>
             }

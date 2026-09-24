@@ -114,16 +114,25 @@ export default function Frame2Reality() {
   const [showPortalAnimation, setShowPortalAnimation] = useState(true);
   
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [registrationClosed] = useState(false);
   
   // Form State
   const [formStep, setFormStep] = useState(1);
-  const [teamSize, setTeamSize] = useState(4);
+  const [teamSize, setTeamSize] = useState(3);
   const [errors, setErrors] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [currentQrIndex, setCurrentQrIndex] = useState(0);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [utrNumber, setUtrNumber] = useState('');
+  
+  // Team name validation states
+  const [teamNameChecking, setTeamNameChecking] = useState(false);
+  const [teamNameTaken, setTeamNameTaken] = useState(false);
+  const [teamNameError, setTeamNameError] = useState<string | null>(null);
+  
+  // Submission control - prevent double submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittedRef = useRef(false);
   
   // Available QR codes
   const qrCodes = [
@@ -202,15 +211,50 @@ export default function Frame2Reality() {
     return () => window.removeEventListener('resize', calc);
   }, []);
 
-  // ── CHECK REGISTRATION STATUS ──
+  // ── REGISTRATION STATUS ── (admin-controlled, always open unless manually set)
+  // Removed localStorage check — registration is always open by default
+
+  // ── CLEANUP DEBOUNCE ON UNMOUNT ──
   useEffect(() => {
-    const status = localStorage.getItem('dv_registration_open');
-    if (status === 'false') setRegistrationClosed(true);
+    return () => {
+      if (checkTeamNameDebounceRef.current) {
+        clearTimeout(checkTeamNameDebounceRef.current);
+      }
+    };
   }, []);
 
   // ── BOOT ──
   useEffect(() => {
     setTimeout(() => setBootSequence(false), 2800);
+  }, []);
+  
+  // ── CHECK IF RECENTLY SUBMITTED (localStorage persistence) ──
+  useEffect(() => {
+    const checkRecentSubmission = () => {
+      try {
+        const lastSubmission = localStorage.getItem('f2r_last_submission');
+        if (lastSubmission) {
+          const submissionData = JSON.parse(lastSubmission);
+          const submittedAt = new Date(submissionData.timestamp);
+          const now = new Date();
+          const minutesAgo = (now.getTime() - submittedAt.getTime()) / 1000 / 60;
+          
+          // If submitted within last 15 minutes, block resubmission
+          if (minutesAgo < 15) {
+            submittedRef.current = true;
+            setIsSubmitting(true);
+            console.log('[Frame2Reality] Recent submission detected ' + Math.round(minutesAgo) + ' minutes ago. Blocking resubmission.');
+          } else {
+            // Clear old submission data
+            localStorage.removeItem('f2r_last_submission');
+          }
+        }
+      } catch (err) {
+        console.error('[Frame2Reality] Error checking recent submission:', err);
+      }
+    };
+    
+    checkRecentSubmission();
   }, []);
 
   // ── START ANIMATION ──
@@ -274,11 +318,63 @@ export default function Frame2Reality() {
   }, [mcDoneCount, titlePhase]);
 
   // ─────────────────────────────────────────────────────────────────
+  // CHECK TEAM NAME AVAILABILITY (DEBOUNCED)
+  // ─────────────────────────────────────────────────────────────────
+  const checkTeamNameDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const checkTeamNameAvailability = async (teamName: string) => {
+    if (!teamName || teamName.trim().length < 2) {
+      setTeamNameTaken(false);
+      setTeamNameError(null);
+      return;
+    }
+    
+    setTeamNameChecking(true);
+    setTeamNameError(null);
+    
+    try {
+      const response = await fetch(
+        `${GOOGLE_SCRIPT_URL}?action=checkTeamName&teamName=${encodeURIComponent(teamName.trim())}`,
+        { method: 'GET' }
+      );
+      
+      const result = await response.json();
+      
+      if (result.exists) {
+        setTeamNameTaken(true);
+        setTeamNameError('⚠️ TEAM NAME ALREADY REGISTERED. Please choose a different name.');
+      } else {
+        setTeamNameTaken(false);
+        setTeamNameError(null);
+      }
+    } catch (error) {
+      console.error('[Team Name Check] Error:', error);
+      // Don't block submission on network errors
+      setTeamNameTaken(false);
+      setTeamNameError(null);
+    } finally {
+      setTeamNameChecking(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────
   // FORM VALIDATION
   // ─────────────────────────────────────────────────────────────────
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
     setErrors(null);
+    
+    // Debounced team name check
+    if (name === 'TeamName') {
+      setTeamNameError(null);
+      if (checkTeamNameDebounceRef.current) {
+        clearTimeout(checkTeamNameDebounceRef.current);
+      }
+      checkTeamNameDebounceRef.current = setTimeout(() => {
+        checkTeamNameAvailability(value);
+      }, 800);
+    }
   };
 
   const handleMemberChange = (index: number, field: string, value: string) => {
@@ -294,6 +390,12 @@ export default function Frame2Reality() {
     
     if (!TeamName || !LeaderName || !LeaderRoll || !LeaderYear || !LeaderBranch || !LeaderSection || !LeaderPhone || !LeaderEmail) {
         setErrors("ERROR: ALL FIELDS ARE MANDATORY");
+        return false;
+    }
+    
+    // Check if team name is already taken
+    if (teamNameTaken) {
+        setErrors("ERROR: TEAM NAME ALREADY REGISTERED");
         return false;
     }
 
@@ -366,14 +468,30 @@ export default function Frame2Reality() {
     }
   };
 
-  // ⚠️ PASTE YOUR DEuihjPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqERB9KYW7Q6YDO9_rICzuDPmz8p8FyYpfHRR-UZGT4B_9oa1H1rRTeA72gJ_UAtou/exec';
+  // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL BELOW
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdIO9eQ3G5gPz3aVbEXHbV8dJN7zneqYgcKNSN_tKH5L0tNgqJGT5zwN4fE1nubfi7/exec';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault(); 
   
+  // 🚫 Prevent double submission
+  if (isSubmitting || submittedRef.current) {
+    console.warn('[Frame2Reality] Submission already in progress or recently completed');
+    setErrors('SUBMISSION BLOCKED: You have already submitted your registration. Please check your email for confirmation.');
+    return;
+  }
+  
   if (!validateStep3()) return;
+  
+  // Final check: Prevent submission if team name is taken
+  if (teamNameTaken) {
+    setErrors('ERROR: TEAM NAME ALREADY REGISTERED. Please go back and choose a different name.');
+    return;
+  }
 
+  // 🔒 Mark as submitting immediately
+  setIsSubmitting(true);
+  submittedRef.current = true;
   setLoading(true);
   setErrors(null);
 
@@ -451,8 +569,23 @@ export default function Frame2Reality() {
 
     if (result?.status === 'error') {
       setErrors(`SERVER ERROR: ${result.message || 'Unknown error'}`);
+      // Reset submission flags on error so user can try again
+      setIsSubmitting(false);
+      submittedRef.current = false;
     } else {
-      // ✅ SUCCESS - Show modal, then close it and scroll to top
+      // ✅ SUCCESS - Save to localStorage to prevent resubmission after refresh
+      try {
+        localStorage.setItem('f2r_last_submission', JSON.stringify({
+          teamName: payload.TeamName,
+          timestamp: new Date().toISOString(),
+          email: payload.LeaderEmail
+        }));
+        console.log('[Frame2Reality] Submission saved to localStorage');
+      } catch (err) {
+        console.error('[Frame2Reality] Could not save to localStorage:', err);
+      }
+      
+      // Show modal, then close it and scroll to top
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
@@ -460,32 +593,15 @@ export default function Frame2Reality() {
       }, 4000);
     }
   } catch (err: unknown) {
+      setIsSubmitting(false);
+      submittedRef.current = false;
+      
       if (err instanceof DOMException && err.name === 'AbortError') {
         console.error('[Frame2Reality] Request timed out after 60 s');
         setErrors('REQUEST TIMED OUT. Please check your connection and try again.');
-      } else if (err instanceof TypeError && String(err).includes('Failed to fetch')) {
-        console.warn('[Frame2Reality] CORS blocked, retrying with no-cors…');
-        try {
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-          });
-          console.log('[Frame2Reality] no-cors fallback completed.');
-          // ✅ SUCCESS - Show modal, then close it and scroll to top
-          setShowSuccessModal(true);
-          setTimeout(() => {
-            setShowSuccessModal(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 4000);
-        } catch (fallbackErr) {
-          console.error('[Frame2Reality] Fallback also failed:', fallbackErr);
-          setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
-        }
       } else {
         console.error('[Frame2Reality] Submission error:', err);
-        setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER');
+        setErrors('CONNECTION FAILURE: UNABLE TO REACH SERVER. Please check your internet connection.');
       }
   } finally { 
       setLoading(false); 
@@ -945,7 +1061,7 @@ export default function Frame2Reality() {
                 <h4 className="text-yellow-500 font-bold mb-1">MANDATORY LOADOUT</h4>
                 <p className="text-sm text-yellow-200/80">
                   1. Laptops are mandatory for every participant.<br/>
-                  2. Team of 4 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
+                  2. Team of 3 - 5 members. (At least 1 GAMING LAPTOP per team is mandatory).
                 </p>
               </div>
             </div>
@@ -1016,14 +1132,50 @@ export default function Frame2Reality() {
                           <div className="grid md:grid-cols-2 gap-6">
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD NAME *</label>
-                              <input required name="TeamName" value={formData.TeamName} onChange={handleInputChange}
-                                className="w-full bg-zinc-900 border border-zinc-700 p-3 text-white focus:border-green-500 focus:outline-none transition-all placeholder-zinc-600 rounded"
-                                placeholder="Ex: CyberPunks" />
+                              <div className="relative">
+                                <input 
+                                  required 
+                                  name="TeamName" 
+                                  value={formData.TeamName} 
+                                  onChange={handleInputChange}
+                                  className={`w-full bg-zinc-900 border p-3 text-white focus:outline-none transition-all placeholder-zinc-600 rounded ${
+                                    teamNameTaken 
+                                      ? 'border-red-500 focus:border-red-500' 
+                                      : teamNameChecking 
+                                      ? 'border-yellow-500 focus:border-yellow-500' 
+                                      : formData.TeamName && !teamNameTaken 
+                                      ? 'border-green-500 focus:border-green-500'
+                                      : 'border-zinc-700 focus:border-green-500'
+                                  }`}
+                                  placeholder="Ex: CyberPunks" 
+                                />
+                                {teamNameChecking && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <RefreshCw className="w-4 h-4 text-yellow-500 animate-spin" />
+                                  </div>
+                                )}
+                                {!teamNameChecking && formData.TeamName && !teamNameTaken && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </div>
+                                )}
+                                {!teamNameChecking && teamNameTaken && (
+                                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                  </div>
+                                )}
+                              </div>
+                              {teamNameError && (
+                                <p className="text-xs text-red-500 mt-1 font-bold animate-pulse">{teamNameError}</p>
+                              )}
+                              {!teamNameChecking && formData.TeamName && !teamNameTaken && formData.TeamName.length >= 2 && (
+                                <p className="text-xs text-green-500 mt-1">✓ Team name available</p>
+                              )}
                             </div>
                             <div>
                               <label className="text-xs text-green-500/70 mb-1 block">SQUAD SIZE *</label>
                               <div className="flex gap-4">
-                                {[4,5].map(num => (
+                                {[3,4,5].map(num => (
                                   <label key={num} className={`flex-1 border p-3 text-center cursor-pointer transition-all rounded ${teamSize===num?'bg-green-500/20 border-green-500 text-green-400 font-bold':'bg-zinc-900 border-zinc-700 text-gray-500'}`}>
                                     <input type="radio" name="TeamSize" value={num} checked={teamSize===num} onChange={() => setTeamSize(num)} className="hidden"/>
                                     {num} MEMBERS
@@ -1097,9 +1249,12 @@ export default function Frame2Reality() {
                             </div>
                           </div>
                           {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}
-                          <button type="button" onClick={nextStep}
-                            className="w-full bg-white text-black font-bold py-4 flex items-center justify-center gap-2 hover:bg-green-400 transition-colors rounded">
-                            NEXT: ADD SQUAD MEMBERS <ChevronRight size={18}/>
+                          <button 
+                            type="button" 
+                            onClick={nextStep}
+                            disabled={teamNameTaken || teamNameChecking}
+                            className="w-full bg-white text-black font-bold py-4 flex items-center justify-center gap-2 hover:bg-green-400 transition-colors rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
+                            {teamNameChecking ? 'CHECKING TEAM NAME...' : 'NEXT: ADD SQUAD MEMBERS'} <ChevronRight size={18}/>
                           </button>
                         </motion.div>
                       )}
@@ -1284,9 +1439,11 @@ export default function Frame2Reality() {
                               className="flex-1 bg-zinc-800 text-white font-bold py-4 hover:bg-zinc-700 transition-colors rounded flex items-center justify-center gap-2">
                               <ArrowLeft size={18} /> BACK
                             </button>
-                            <button type="submit" disabled={loading}
-                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed">
-                              {loading ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <CheckCircle size={18}/>
+                            <button 
+                              type="submit" 
+                              disabled={loading || isSubmitting || submittedRef.current}
+                              className="flex-[2] bg-green-600 text-black font-bold py-4 hover:bg-green-500 transition-colors flex items-center justify-center gap-2 rounded shadow-[0_0_20px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600">
+                              {loading || isSubmitting ? 'TRANSMITTING...' : 'CONFIRM DEPLOYMENT'} <CheckCircle size={18}/>
                             </button>
                           </div>
 

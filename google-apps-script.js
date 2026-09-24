@@ -104,12 +104,200 @@ function getOrCreateSheet() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Helper function to check if team name already exists
+// ─────────────────────────────────────────────────────────────────
+function isTeamNameTaken(teamName) {
+  try {
+    // Safety check: return false if teamName is invalid
+    if (!teamName || teamName === null || teamName === undefined) {
+      Logger.log('⚠️ isTeamNameTaken: teamName is null/undefined');
+      return false;
+    }
+    
+    const sheet = getOrCreateSheet();
+    const data = sheet.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      return false; // No registrations yet
+    }
+    
+    const headers = data[0];
+    const teamNameCol = headers.indexOf('TeamName');
+    
+    if (teamNameCol === -1) {
+      Logger.log('⚠️ isTeamNameTaken: TeamName column not found');
+      return false;
+    }
+    
+    // Normalize team name for comparison (case-insensitive, trim whitespace)
+    const normalizedInput = teamName.toString().trim().toLowerCase();
+    
+    // If normalized input is empty, return false
+    if (!normalizedInput || normalizedInput === '') {
+      Logger.log('⚠️ isTeamNameTaken: normalized team name is empty');
+      return false;
+    }
+    
+    // Check rows starting from row 2   (skip header)
+    for (let i = 1; i < data.length; i++) {
+      const existingTeamName = data[i][teamNameCol] ? data[i][teamNameCol].toString().trim().toLowerCase() : '';
+      if (existingTeamName && existingTeamName === normalizedInput) {
+        Logger.log('✓ Team name "' + teamName + '" already exists (row ' + (i + 1) + ')');
+        return true; // Team name already exists
+      }
+    }
+    
+    Logger.log('✓ Team name "' + teamName + '" is available');
+    return false;
+    
+  } catch (error) {
+    Logger.log('❌ Error in isTeamNameTaken: ' + error.message);
+    Logger.log('Stack trace: ' + error.stack);
+    // Return false on error to not block registrations due to technical issues
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // POST — Handle form submissions from Frame2Reality page
 // ─────────────────────────────────────────────────────────────────
 function doPost(e) {
+  // 🔒 ACQUIRE LOCK to prevent race conditions
+  const lock = LockService.getScriptLock();
+  try {
+    // Wait up to 30 seconds for lock
+    lock.waitLock(30000);
+  } catch (lockErr) {
+    Logger.log('❌ Could not acquire lock: ' + lockErr.message);
+    return ContentService
+      .createTextOutput(JSON.stringify({ 
+        status: 'error', 
+        message: 'Server is busy. Please try again in a moment.' 
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
   try {
     const data = JSON.parse(e.postData.contents);
     const sheet = getOrCreateSheet();
+    Logger.log('📝 Registration submission received for team: "' + (data.TeamName || 'N/A') + '"');
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMPREHENSIVE DUPLICATE DETECTION
+    // ═══════════════════════════════════════════════════════════════
+    const sheetData = sheet.getDataRange().getValues();
+    const headers = sheetData[0];
+    
+    // Get column indices
+    const teamNameCol = headers.indexOf('TeamName');
+    const utrCol = headers.indexOf('UTRNumber');
+    const leaderEmailCol = headers.indexOf('LeaderEmail');
+    const leaderPhoneCol = headers.indexOf('LeaderPhone');
+    const timestampCol = headers.indexOf('Timestamp');
+    
+    // Normalize input data for comparison
+    const inputTeamName = (data.TeamName || '').toString().trim().toLowerCase();
+    const inputUTR = (data.UTRNumber || '').toString().trim();
+    const inputEmail = (data.LeaderEmail || '').toString().trim().toLowerCase();
+    const inputPhone = (data.LeaderPhone || '').toString().trim();
+    
+    // Check all existing registrations
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      const existingTeamName = row[teamNameCol] ? row[teamNameCol].toString().trim().toLowerCase() : '';
+      const existingUTR = row[utrCol] ? row[utrCol].toString().trim() : '';
+      const existingEmail = row[leaderEmailCol] ? row[leaderEmailCol].toString().trim().toLowerCase() : '';
+      const existingPhone = row[leaderPhoneCol] ? row[leaderPhoneCol].toString().trim() : '';
+      
+      // Check 1: Team Name duplicate
+      if (inputTeamName && existingTeamName === inputTeamName) {
+        Logger.log('❌ Duplicate detected: Team name "' + data.TeamName + '" already exists (row ' + (i + 1) + ')');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'TEAM NAME ALREADY REGISTERED. Please choose a different team name.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // Check 2: UTR Number duplicate (same payment used twice)
+      if (inputUTR && existingUTR === inputUTR && inputUTR !== '') {
+        Logger.log('❌ Duplicate detected: UTR "' + inputUTR + '" already used (row ' + (i + 1) + ')');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'TRANSACTION ID ALREADY USED. This payment has already been registered. If this is an error, contact support.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // Check 3: Exact duplicate submission (same email + phone + team name)
+      if (inputEmail && inputPhone && 
+          existingEmail === inputEmail && 
+          existingPhone === inputPhone && 
+          existingTeamName === inputTeamName) {
+        
+        // Calculate time difference
+        const existingTimestamp = new Date(row[timestampCol]);
+        const timeDiffMinutes = (new Date() - existingTimestamp) / 1000 / 60;
+        
+        // If duplicate within 10 minutes, it's likely accidental resubmission
+        if (timeDiffMinutes < 10) {
+          Logger.log('❌ Duplicate detected: Identical submission within ' + timeDiffMinutes.toFixed(1) + ' minutes (row ' + (i + 1) + ')');
+          return ContentService
+            .createTextOutput(JSON.stringify({ 
+              status: 'error', 
+              message: 'DUPLICATE SUBMISSION DETECTED. Your registration was already received ' + Math.round(timeDiffMinutes) + ' minutes ago. Please check your email for confirmation.' 
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+    
+    Logger.log('✓ All duplicate checks passed, proceeding with registration');
+
+    // ═══════════════════════════════════════════════════════════════
+    // GENERATE SUBMISSION FINGERPRINT (additional safety layer)
+    // ═══════════════════════════════════════════════════════════════
+    // Create a unique fingerprint from critical data
+    const submissionFingerprint = [
+      inputTeamName,
+      inputEmail,
+      inputPhone,
+      inputUTR,
+      (data.LeaderRoll || '').toString().trim()
+    ].join('|').toLowerCase();
+    
+    // Check if exact same fingerprint exists in recent submissions (last 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - (24 * 60 * 60 * 1000));
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      const rowTimestamp = new Date(row[timestampCol]);
+      
+      // Only check recent submissions
+      if (rowTimestamp < twentyFourHoursAgo) continue;
+      
+      const existingFingerprint = [
+        row[teamNameCol] ? row[teamNameCol].toString().trim().toLowerCase() : '',
+        row[leaderEmailCol] ? row[leaderEmailCol].toString().trim().toLowerCase() : '',
+        row[leaderPhoneCol] ? row[leaderPhoneCol].toString().trim() : '',
+        row[utrCol] ? row[utrCol].toString().trim() : '',
+        row[headers.indexOf('LeaderRoll')] ? row[headers.indexOf('LeaderRoll')].toString().trim() : ''
+      ].join('|').toLowerCase();
+      
+      if (submissionFingerprint === existingFingerprint) {
+        const minutesAgo = Math.round((new Date() - rowTimestamp) / 1000 / 60);
+        Logger.log('❌ EXACT DUPLICATE DETECTED: Identical submission found ' + minutesAgo + ' minutes ago (row ' + (i + 1) + ')');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            status: 'error', 
+            message: 'DUPLICATE REGISTRATION DETECTED. Your registration was already submitted ' + minutesAgo + ' minute(s) ago. Please check your records or contact support if this is an error.' 
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    
+    Logger.log('✓ Fingerprint check passed - this is a unique submission');
 
     // Save payment proof to Google Drive if present
     let paymentProofLink = '';
@@ -147,6 +335,7 @@ function doPost(e) {
     ];
 
     sheet.appendRow(row);
+    Logger.log('✅ Registration saved successfully for team: \"' + (data.TeamName || 'N/A') + '\"');
 
     // Email will be sent manually after payment verification
     // Admin will type 'OK' in PaymentStatus column to trigger email
@@ -156,17 +345,54 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log('❌ doPost error: ' + err.message);
+    Logger.log('Stack trace: ' + err.stack);
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    // 🔓 ALWAYS RELEASE LOCK
+    lock.releaseLock();
+    Logger.log('🔓 Lock released');
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// GET — Return all registrations to the Admin page
+// GET — Return all registrations to the Admin page OR check team name
 // ─────────────────────────────────────────────────────────────────
 function doGet(e) {
   try {
+    // Check if this is a team name verification request
+    const params = e.parameter || {};
+    Logger.log('📥 doGet called with action: ' + params.action);
+    
+    // Action: checkTeamName
+    if (params.action === 'checkTeamName') {
+      const teamName = params.teamName;
+      Logger.log('🔍 Checking team name: "' + teamName + '"');
+      
+      // Validate that teamName parameter exists and is not empty
+      if (!teamName || teamName.trim() === '') {
+        Logger.log('⚠️ Team name parameter is empty or missing');
+        return ContentService
+          .createTextOutput(JSON.stringify({ 
+            exists: false,
+            message: 'Team name parameter is required'
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      const isTaken = isTeamNameTaken(teamName);
+      Logger.log('✓ Check result: ' + (isTaken ? 'TAKEN' : 'AVAILABLE'));
+      return ContentService
+        .createTextOutput(JSON.stringify({ 
+          exists: isTaken,
+          message: isTaken ? 'Team name already registered' : 'Team name available'
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Default action: Return all registrations for Admin page
     const sheet = getOrCreateSheet();
     const data = sheet.getDataRange().getValues();
     
@@ -193,6 +419,8 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
+    Logger.log('❌ doGet error: ' + err.message);
+    Logger.log('Stack trace: ' + err.stack);
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -421,7 +649,7 @@ function sendConfirmationEmail(details) {
                 </h3>
                 <ul style="margin: 0; padding-left: 20px; color: #a3a3a3; font-size: 13px; line-height: 1.8;">
                   <li><strong style="color: #ffffff;">Laptops are mandatory</strong> for all participants</li>
-                  <li>Mode of participation: <strong style="color: #ffffff;">Team of 4-5 members</strong></li>
+                  <li>Mode of participation: <strong style="color: #ffffff;">Team of 3-5 members</strong></li>
                   <li><strong style="color: #ffffff;">Minimum 1 Gaming laptop per team is mandatory</strong></li>
                   <li>Please arrive <strong style="color: #ffffff;">15 minutes early</strong> for registration</li>
                   <li>Carry <strong style="color: #ffffff;">valid ID proof</strong> and payment confirmation</li>
