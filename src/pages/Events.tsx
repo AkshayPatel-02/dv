@@ -22,20 +22,22 @@ const Events = () => {
     (location.state as any)?.tab === 'past' ? 'past' : 'upcoming'
   );
 
-  // 📌 UPCOMING EVENTS - Frame2Reality with STANDARD styling
-  const upcomingEvents: Event[] = [
-    {
-      title: 'FRAME2REALITY',
-      date: 'FEB 20-21, 2026',
-      time: '10:00 AM - 4:20 PM',
-      location: 'Nalanda Auditorium, VBIT',
-      attendees: 'Registration Open',
-      description: 'Master Unity 3D and build AR Applications in this intensive 2-Day bootcamp. From wireframes to deployed apps - Level up from Player to Developer.',
-      image: '/Frame2Reality.png',
-      link: '/frame2reality',
-      registrationLink: '/frame2reality',
-    }
-  ];
+  // 📌 UPCOMING EVENTS
+const upcomingEvents: Event[] = [
+  {
+    title: 'OLLAVERSE',
+    date: 'SEPT 29-30, 2026',
+    time: 'Full Day',
+    location: 'Nalanda Auditorium, VBIT',
+    attendees: 'Registration Open',
+    description:
+      'Explore Ollama and build AI-powered projects in this 2-Day event. Day 1 features a hands-on workshop with a resource person, followed by project implementation on Day 2. An Elocution activity will also be conducted for registered participants.',
+    image: '/Ollaverse.jpeg',
+    link: '/ollaverse',
+    registrationLink: '/ollaverse',
+  }
+];
+  
 
   // 📌 PAST EVENTS
   const pastEvents: Event[] = [

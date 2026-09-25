@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Feedback from './pages/Feedback';
 import FeedbackAdmin from './pages/FeedbackAdmin';
+import Ollaverse from "./pages/Ollaverse";
 
 // Scroll to top on every route change
 function ScrollToTop() {
@@ -58,6 +59,7 @@ const App = () => (
                   <Route path="/excom-2023" element={<ExCom2023 />} />
                   <Route path="/excom-2024" element={<ExCom2024 />} />
                   <Route path="/events" element={<Events />} />
+                  <Route path="/ollaverse" element={<Ollaverse/>}/>
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/frame2reality" element={<Frame2Reality />} />
