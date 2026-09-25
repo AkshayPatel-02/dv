@@ -1,0 +1,19 @@
+﻿{
+  "timeZone": "Asia/Kolkata",
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "OllaverseLib",
+        "version": "1",
+        "libraryId": "1kmgSXhIf7uUwFUaiVQmQGxn8ex9vyEA7wu0hbee85D_7CtLvFg1BdfFt",
+        "developmentMode": false
+      }
+    ]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  }
+}
