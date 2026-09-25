@@ -1,6 +1,6 @@
 {
   "name": "OLLAVERSE — Data Vedhi Presents Local AI Hack & Workshop",
-  "description": "Build. Experiment. Create with Local AI. 29–30 October 2026 at Nalanda Auditorium, VBIT. Official 2-day hands-on event for local AI models, hackathon, and workshops.",
+  "description": "Build. Experiment. Create with Local AI. 29–30 September 2026 at Nalanda Auditorium, VBIT. Official 2-day hands-on event for local AI models, hackathon, and workshops.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

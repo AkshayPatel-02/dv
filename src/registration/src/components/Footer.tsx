@@ -27,7 +27,7 @@ export const Footer: React.FC<FooterProps> = ({
             <strong>OLLAVERSE</strong> is the flagship local AI hackathon and hands-on workshop organized by Data Vedhi, Student Chapter for Artificial Intelligence and Data Science at VBIT.
           </p>
           <div className="flex flex-wrap items-center gap-4 text-xs pt-2">
-            <span className="text-cyan-400 font-semibold">29–30 OCTOBER 2026</span>
+            <span className="text-cyan-400 font-semibold">29–30 SEPTEMBER 2026</span>
             <span className="text-slate-600">·</span>
             <span>Nalanda Auditorium, VBIT</span>
           </div>

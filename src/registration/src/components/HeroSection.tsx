@@ -82,7 +82,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onEnter }) => {
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-sm font-mono text-slate-300 mb-6">
             <div className="flex items-center gap-2 bg-slate-900/70 border border-slate-800 px-3.5 py-1.5 rounded-lg shadow-sm">
               <Calendar className="w-4 h-4 text-cyan-400" />
-              <span className="font-semibold text-white tracking-wide">29–30 OCTOBER 2026</span>
+              <span className="font-semibold text-white tracking-wide">29–30 SEPTEMBER 2026</span>
             </div>
             <div className="flex items-center gap-2 bg-slate-900/70 border border-slate-800 px-3.5 py-1.5 rounded-lg shadow-sm">
               <MapPin className="w-4 h-4 text-purple-400" />

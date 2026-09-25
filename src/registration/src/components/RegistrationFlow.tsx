@@ -66,7 +66,7 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onSuccess, o
 
   // Form State
   const [teamName, setTeamName] = useState<string>('');
-  const [teamSize, setTeamSize] = useState<2 | 3 | 4>(3);
+  const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
 
   const [teamLead, setTeamLead] = useState<TeamMember>({
     fullName: '',
@@ -83,7 +83,7 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onSuccess, o
     { ...EMPTY_MEMBER },
   ]);
 
-  // Adjust member list dynamically when teamSize changes
+  // Adjust member list dynamically when teamSize changes (teamSize fixed to 2–4)
   useEffect(() => {
     const needed = teamSize - 1;
     setMembers((prev) => {
@@ -279,7 +279,7 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onSuccess, o
             TEAM REGISTRATION
           </h2>
           <p className="text-sm sm:text-base text-slate-300 font-light">
-            Registrations are now open. Secure your squad's slot for the 29–30 October workshop and hackathon.
+            Registrations are now open. Secure your squad's slot for the 29–30 September workshop and hackathon.
           </p>
         </div>
 
@@ -379,7 +379,6 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onSuccess, o
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {([2, 3, 4] as const).map((size) => {
-                    const price = config.pricing[size];
                     const isSelected = teamSize === size;
                     return (
                       <button
@@ -402,12 +401,6 @@ export const RegistrationFlow: React.FC<RegistrationFlowProps> = ({ onSuccess, o
                             }`}
                           />
                         </div>
-                        <p className="text-2xl font-mono font-bold text-emerald-400 mb-1 tabular-nums">
-                          ₹{price}
-                        </p>
-                        <p className="text-[11px] font-mono text-slate-400">
-                          ₹{Math.round(price / size)} / participant
-                        </p>
 
                         {isSelected && (
                           <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#38bdf8]" />

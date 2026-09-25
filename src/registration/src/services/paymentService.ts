@@ -13,7 +13,7 @@ export interface PaymentWebhookPayload {
 class PaymentService {
   /**
    * Generates standard UPI intent URL for scanner apps.
-   * e.g. upi://pay?pa=...&pn=...&am=150&cu=INR&tn=Ollaverse%20Pass
+   * e.g. upi://pay?pa=...&pn=...&am=300&cu=INR&tn=Ollaverse%20Pass
    */
   public generateUpiUrl(params: {
     upiId: string;

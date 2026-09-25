@@ -476,7 +476,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-mono">
                   <span className="text-slate-400 block uppercase text-[10px] tracking-wider">TOTAL TEAMS</span>
                   <span className="text-xl sm:text-2xl font-bold text-white block mt-1">{stats.totalRegisteredTeams}</span>
-                  <span className="text-[10px] text-cyan-400 block mt-0.5">4 Members / Squad</span>
+                  <span className="text-[10px] text-cyan-400 block mt-0.5">2–4 Members / Squad</span>
                 </div>
 
                 {/* 2. Total Students */}
@@ -1384,14 +1384,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {/* Team Size - strictly 4 */}
                   <div>
                     <label className="block text-xs font-mono uppercase text-slate-300 mb-1">
-                      Team Size (Strictly Fixed)
-                    </label>
-                    <input
-                      type="text"
-                      value="4 Members / Team"
-                      disabled
-                      className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-cyan-400 text-xs font-mono font-bold"
-                    />
+                        Team Size (2–4 Members)
+                      </label>
+                      <input
+                        type="text"
+                        value="2–4 Members / Team"
+                        disabled
+                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-cyan-400 text-xs font-mono font-bold"
+                      />
                   </div>
 
                   {/* Event Dates */}

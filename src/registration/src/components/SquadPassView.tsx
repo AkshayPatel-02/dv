@@ -242,7 +242,7 @@ export const SquadPassView: React.FC<SquadPassViewProps> = ({
                 TEAM SIZE
               </span>
               <span className="font-bold text-white text-sm">
-                4 MEMBERS
+                {registration?.teamSize || 4} MEMBERS
               </span>
             </div>
 
@@ -263,7 +263,7 @@ export const SquadPassView: React.FC<SquadPassViewProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Squad Roster (4 Members)</span>
+                  <span>Squad Roster ({registration?.teamSize || 4} Members)</span>
                 </span>
                 <span className="text-[10px] font-mono text-cyan-400">
                   VBIT Verified
@@ -352,7 +352,7 @@ export const SquadPassView: React.FC<SquadPassViewProps> = ({
           <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono text-slate-400">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span className="font-semibold text-slate-200">29–30 OCTOBER 2026</span>
+              <span className="font-semibold text-slate-200">29–30 SEPTEMBER 2026</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-purple-400 shrink-0" />

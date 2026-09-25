@@ -376,7 +376,7 @@ export const EntryScanner: React.FC<EntryScannerProps> = ({ onViewPass }) => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 uppercase">TEAM SIZE:</span>
-                  <span className="text-white font-bold">4 MEMBERS</span>
+                  <span className="text-white font-bold">{activeRegistration.teamSize} MEMBERS</span>
                 </div>
 
                 <div className="flex items-center justify-between">

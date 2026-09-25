@@ -51,7 +51,7 @@ async function runTestSuite() {
   const initialConfig = configService.getConfig();
   assert(!!initialConfig, 'Init', 'Event configuration loaded successfully');
   assert(initialConfig.venue === 'Nalanda Auditorium, VBIT', 'Init', 'Event venue matches specification');
-  assert(initialConfig.eventDates === '29–30 OCTOBER 2026', 'Init', 'Event dates match 29-30 October 2026');
+  assert(initialConfig.eventDates === '29–30 SEPTEMBER 2026', 'Init', 'Event dates match 29-30 September 2026');
   assert(initialConfig.registrationOpen === true, 'Init', 'Registrations are open by default');
   assert(initialConfig.paymentQr1.upiId === 'datavedhi@oksbi', 'Init', 'Default UPI Option 1 configured');
   assert(initialConfig.paymentQr2.upiId === 'ollaverse.vbit@icici', 'Init', 'Default UPI Option 2 configured');
