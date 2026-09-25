@@ -112,7 +112,7 @@ export const PublicVerifyPage: React.FC<PublicVerifyPageProps> = ({
 
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <span className="text-slate-500 uppercase">Team Size:</span>
-                  <span className="text-white">4 MEMBERS</span>
+                  <span className="text-white">{registration?.teamSize || '—'} MEMBERS</span>
                 </div>
 
                 <div className="flex items-center justify-between">

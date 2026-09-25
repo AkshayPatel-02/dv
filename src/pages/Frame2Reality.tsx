@@ -498,7 +498,7 @@ export default function Frame2Reality() {
   const payload: Record<string, string> = {
     TeamName: formData.TeamName,
     TeamSize: teamSize.toString(),
-    TotalAmount: (teamSize * 150).toString(),
+  TotalAmount: (teamSize * 300).toString(),
     LeaderName: formData.LeaderName,
     LeaderRoll: formData.LeaderRoll,
     LeaderYear: formData.LeaderYear,
@@ -608,7 +608,7 @@ export default function Frame2Reality() {
   }
 };
 
-  const totalAmount = teamSize * 150;
+  const totalAmount = teamSize * 300;
 
   // ─────────────────────────────────────────────────────
   // BOOT SCREEN
@@ -1341,7 +1341,7 @@ export default function Frame2Reality() {
                               <span className="text-gray-400 text-sm">TOTAL AMOUNT:</span>
                               <span className="text-green-400 text-2xl font-black">₹{totalAmount}</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">@ ₹150 per member × {teamSize} members</p>
+                            <p className="text-xs text-gray-500 mt-1">@ ₹300 per member × {teamSize} members</p>
                           </div>
 
                           {errors && <p className="text-red-500 text-xs font-bold animate-pulse">{errors}</p>}

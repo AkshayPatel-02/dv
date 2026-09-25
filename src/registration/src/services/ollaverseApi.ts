@@ -34,12 +34,12 @@ export function generateRandomSalt(): string {
 
 const DEFAULT_CONFIG: EventConfig = {
   pricing: {
-    2: 150,
-    3: 225,
+    2: 300,
+    3: 300,
     4: 300,
   },
   registrationFee: 300,
-  eventDates: '29–30 OCTOBER 2026',
+  eventDates: '29–30 SEPTEMBER 2026',
   venue: 'Nalanda Auditorium, VBIT',
   tagline: 'Build. Experiment. Create with Local AI.',
   registrationOpen: true,
@@ -59,19 +59,19 @@ const DEFAULT_CONFIG: EventConfig = {
   },
   guidance: {
     day1Title: 'DISCOVER',
-    day1Date: '29 OCTOBER 2026',
+    day1Date: '29 SEPTEMBER 2026',
     day1Subtitle: 'Hands-on Ollama Foundations',
     day1Description:
       'Learn how Ollama works and explore local AI with our resource person. Setup local models, quantization, and prompt architectures on your laptops without cloud latency.',
     day2Title: 'CREATE',
-    day2Date: '30 OCTOBER 2026',
+    day2Date: '30 SEPTEMBER 2026',
     day2Subtitle: 'Local AI Build Hackathon',
     day2Description:
       'Put your knowledge into action and build your own project using Ollama. Pair-program with your 4-member squad, consult mentors, and showcase your innovation to jury panels.',
     workshopDetails:
       'Laptops required: Minimum 8GB RAM (16GB recommended). Ollama CLI, Python 3.10+, and Docker/VS Code pre-installed. All inference runs locally on device.',
     rules: [
-      'Each squad must consist of exactly 4 members: 1 Team Lead + 3 Team Members.',
+      'Each squad must consist of 2–4 members: 1 Team Lead + 1–3 Team Members.',
       'All AI models must run purely locally via Ollama with zero external API calls during judging.',
       'Original projects developed during the hackathon hours only.',
     ],

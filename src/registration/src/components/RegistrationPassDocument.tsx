@@ -203,7 +203,7 @@ export const RegistrationPassDocument: React.FC<RegistrationPassDocumentProps> =
           <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs font-mono text-slate-400">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-cyan-400" />
-              <span>29–30 OCTOBER 2026</span>
+              <span>29–30 SEPTEMBER 2026</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-purple-400" />

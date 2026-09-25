@@ -93,7 +93,7 @@ Event:
 OLLAVERSE
 
 Dates:
-29–30 October 2026
+29–30 September 2026
 
 Venue:
 Nalanda Auditorium, VBIT
@@ -127,7 +127,7 @@ OLLAVERSE`;
             <tr><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #64748b; font-size: 13px;">Team Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #ffffff; font-weight: 600;">${registration.teamName}</td></tr>
             <tr><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #64748b; font-size: 13px;">Team Size</td><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #ffffff;">${registration.teamSize} Members</td></tr>
             <tr><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #64748b; font-size: 13px;">Amount Paid</td><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #10b981; font-weight: bold;">₹${registration.amount}</td></tr>
-            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #64748b; font-size: 13px;">Dates</td><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #ffffff;">29–30 October 2026</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #64748b; font-size: 13px;">Dates</td><td style="padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #ffffff;">29–30 September 2026</td></tr>
             <tr><td style="padding: 10px 14px; color: #64748b; font-size: 13px;">Venue</td><td style="padding: 10px 14px; color: #ffffff;">Nalanda Auditorium, VBIT</td></tr>
           </table>
 

@@ -41,7 +41,7 @@ export const EventJourneySection: React.FC<EventJourneySectionProps> = ({ onRegi
                 </span>
                 <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
                   <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>29 OCTOBER 2026</span>
+                  <span>29 SEPTEMBER 2026</span>
                 </div>
               </div>
 
@@ -109,7 +109,7 @@ export const EventJourneySection: React.FC<EventJourneySectionProps> = ({ onRegi
                 </span>
                 <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
                   <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                  <span>30 OCTOBER 2026</span>
+                  <span>30 SEPTEMBER 2026</span>
                 </div>
               </div>
 

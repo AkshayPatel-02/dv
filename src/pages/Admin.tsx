@@ -137,12 +137,12 @@ export default function Admin() {
         // Handle corrupted TeamSize data (some rows have team name instead of number)
         let parsedSize = parseInt(row.TeamSize || '0', 10);
         if (isNaN(parsedSize) || parsedSize < 1 || parsedSize > 5) {
-          // Derive from TotalAmount (₹150 per person)
+          // Derive from TotalAmount (₹300 per person)
           const amount = parseInt(row.TotalAmount || '0', 10);
-          parsedSize = amount > 0 ? Math.round(amount / 150) : 4;
-          // Clamp to valid range
-          if (parsedSize < 3) parsedSize = 3;
-          if (parsedSize > 5) parsedSize = 5;
+          parsedSize = amount > 0 ? Math.round(amount / 300) : 2;
+          // Clamp to valid range 2–4
+          if (parsedSize < 2) parsedSize = 2;
+          if (parsedSize > 4) parsedSize = 4;
         }
         return {
           TeamName: row.TeamName || '',
