@@ -10,8 +10,8 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
-  // Hide navbar and footer for Frame2Reality, Feedback, and FeedbackAdmin pages
-  const hideHeaderFooter = ['/frame2reality', '/feedback', '/feedback-admin'].includes(location.pathname);
+  // Hide navbar and footer for Frame2Reality, Feedback, FeedbackAdmin and registration app routes (if they provide their own chrome)
+  const hideHeaderFooter = ['/frame2reality', '/feedback', '/feedback-admin'].some(p => location.pathname.startsWith(p)) || location.pathname.startsWith('/ollaverse/registration');
 
   return (
     <div className="min-h-screen flex flex-col">
