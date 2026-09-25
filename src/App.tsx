@@ -8,6 +8,7 @@ import Layout from "./components/Layout";
 import Feedback from './pages/Feedback';
 import FeedbackAdmin from './pages/FeedbackAdmin';
 import Ollaverse from "./pages/Ollaverse";
+import OllaverseRegistration from "./pages/OllaverseRegistration";
 
 // Scroll to top on every route change
 function ScrollToTop() {
@@ -60,6 +61,7 @@ const App = () => (
                   <Route path="/excom-2024" element={<ExCom2024 />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/ollaverse" element={<Ollaverse/>}/>
+                  <Route path="/ollaverse/registration" element={<OllaverseRegistration/>} />
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/frame2reality" element={<Frame2Reality />} />

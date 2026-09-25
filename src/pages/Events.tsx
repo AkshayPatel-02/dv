@@ -34,7 +34,7 @@ const upcomingEvents: Event[] = [
       'Explore Ollama and build AI-powered projects in this 2-Day event. Day 1 features a hands-on workshop with a resource person, followed by project implementation on Day 2. An Elocution activity will also be conducted for registered participants.',
     image: '/Ollaverse.jpeg',
     link: '/ollaverse',
-    registrationLink: '/ollaverse',
+    registrationLink: '/ollaverse/registration',
   }
 ];
   
